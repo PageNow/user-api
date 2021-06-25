@@ -4,8 +4,9 @@
 
 ### Run without docker
 
-Set ```POSTGRESS_SERVER=localhost``` in ```.env```. Then run
+To run the server locally (not through docker), run
 ```shell
+$ export POSTGRES_SERVER=localhost
 $ uvicorn app.main:app --host 0.0.0.0 --port 8007 --reload
 ```
 
