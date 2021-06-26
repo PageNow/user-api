@@ -11,13 +11,12 @@ class UserBase(BaseModel):
     middle_name: str
     last_name: str
 
-class User(UserBase):
+class UserPublic(UserBase):
     user_uuid: uuid.UUID
     dob: Optional[datetime.date] = None
 
-class UserMe(User):
+class UserPrivate(UserPublic):
     dob_public: bool
-    
 
 class UserCreate(UserBase):
     dob: datetime.date
