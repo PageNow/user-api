@@ -1,4 +1,5 @@
 import uuid
+from typing import Dict
 
 from fastapi import APIRouter, Depends, HTTPException
 from starlette.status import HTTP_404_NOT_FOUND
@@ -24,9 +25,10 @@ async def create_user(user: UserCreate, db: Database = Depends(get_db)):
 
 @router.get("/me", response_model=UserPrivate)
 async def get_user_private(
-    db: Database = Depends(get_db), username: str = Depends(get_current_user)
+    db: Database = Depends(get_db),
+    user_info: Dict[str, str] = Depends(get_current_user)
 ):
-    db_user = await crud_user.get_user_by_id(username)
+    db_user = await crud_user.get_user_by_id(db, user_info['user_id'])
     if db_user is None:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND,
                             detail="User not found")

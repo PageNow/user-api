@@ -25,8 +25,11 @@ auth = JWTBearer(jwks)
 
 async def get_current_user(
     credentials: JWTAuthorizationCredentials = Depends(auth)
-) -> str:
+) -> Dict[str, str]:
     try:
-        return credentials.claims["username"]
+        return {
+            "user_id": credentials.claims["cognito:username"],
+            "email": credentials.claims["email"]
+        }
     except KeyError:
         HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Username missing")
