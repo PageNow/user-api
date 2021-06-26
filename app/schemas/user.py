@@ -15,5 +15,9 @@ class User(UserBase):
     user_uuid: uuid.UUID
     dob: Optional[datetime.date] = None
 
+class UserMe(User):
+    dob_public: bool
+    
+
 class UserCreate(UserBase):
     dob: datetime.date

@@ -10,7 +10,7 @@ user_table = Table(
     metadata,
     Column("user_id", String, primary_key=True, index=True),
     Column(
-        "user_uuid", UUID(as_uuid=True), nullable=False, unique=True,
+        "user_uuid", UUID, nullable=False, unique=True,
         index=True, server_default=text("uuid_generate_v4()")
     ),
     Column("email", String, unique=True, nullable=False),

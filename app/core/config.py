@@ -1,3 +1,5 @@
+import os
+
 from databases import DatabaseURL
 from starlette.config import Config
 from starlette.datastructures import Secret
@@ -10,6 +12,8 @@ VERSION = "1.0.0"
 POSTGRES_USER = config("POSTGRES_USER", cast=str)
 POSTGRES_PASSWORD = config("POSTGRES_PASSWORD", cast=Secret)
 POSTGRES_SERVER = config("POSTGRES_SERVER", cast=str, default="db")
+if "POSTGRES_SERVER" in os.environ:
+    POSTGRES_SERVER = os.environ['POSTGRES_SERVER']
 POSTGRES_PORT = config("POSTGRES_PORT", cast=str, default="5432")
 POSTGRES_DB = config("POSTGRES_DB", cast=str)
 
