@@ -1,7 +1,7 @@
 from sqlalchemy import Table, Column, String, Boolean, Date, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
-from sqlalchemy.sql.expression import text, false
+from sqlalchemy.sql.expression import null, text, false
 
 from app.db.db import metadata
 
@@ -22,5 +22,9 @@ user_table = Table(
     Column("dob", Date, nullable=False),
     Column("dob_public", Boolean, server_default=false(), nullable=False),
 
-    Column("created_at", DateTime, server_default=func.now(), nullable=False)
+    Column("created_at", DateTime, server_default=func.now(), nullable=False),
+
+    # additional Info
+    Column("gender", String, nullable=False),
+    Column("gender_public", Boolean, server_default=false(), nullable=False)
 )

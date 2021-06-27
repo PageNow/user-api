@@ -5,19 +5,19 @@ import datetime
 from pydantic import BaseModel
 
 class UserBase(BaseModel):
-    user_id: str
-    email: str
     first_name: str
     middle_name: str
     last_name: str
 
-class User(UserBase):
+class UserPublic(UserBase):
     user_uuid: uuid.UUID
     dob: Optional[datetime.date] = None
 
-class UserMe(User):
+class UserPrivate(UserPublic):
+    user_id: str
+    email: str
     dob_public: bool
-    
 
 class UserCreate(UserBase):
     dob: datetime.date
+    gender: str
