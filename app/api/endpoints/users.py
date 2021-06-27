@@ -2,7 +2,7 @@ import uuid
 from typing import Dict
 
 from fastapi import APIRouter, Depends, HTTPException
-from starlette.status import HTTP_404_NOT_FOUND
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
 from databases import Database
 
 from app.crud import crud_user
@@ -14,21 +14,25 @@ router = APIRouter()
 
 
 @router.post("/me")
-async def create_user(user: UserCreate, db: Database = Depends(get_db)):
-    db_user = await crud_user.get_user_by_id(db, user.user_id)
+async def create_user(
+    user: UserCreate,
+    db: Database = Depends(get_db),
+    curr_user: Dict[str, str] = Depends(get_current_user)
+):
+    db_user = await crud_user.get_user_by_id(db, curr_user['user_id'])
     if db_user:
-        raise HTTPException(status_code=400, detail="User already exists")
-    error = await crud_user.create_user(db, user)
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="User already exists")
+    error = await crud_user.create_user(db, curr_user, user)
     if error is not None:
-        return {'success': False, 'error': error}
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR, detail=error)
     return {'success': True, 'error': None}
 
 @router.get("/me", response_model=UserPrivate)
 async def get_user_private(
     db: Database = Depends(get_db),
-    user_info: Dict[str, str] = Depends(get_current_user)
+    curr_user: Dict[str, str] = Depends(get_current_user)
 ):
-    db_user = await crud_user.get_user_by_id(db, user_info['user_id'])
+    db_user = await crud_user.get_user_by_id(db, curr_user['user_id'])
     if db_user is None:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND,
                             detail="User not found")

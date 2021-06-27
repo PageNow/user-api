@@ -1,4 +1,5 @@
 import uuid
+from typing import Dict
 
 from sqlalchemy.sql.expression import literal_column
 from databases import Database
@@ -16,12 +17,13 @@ async def get_user_by_uuid(db: Database, user_uuid: uuid.UUID):
     user = await db.fetch_one(query)
     return user
 
-async def create_user(db: Database, user: UserCreate):
-    query = user_table.insert().returning(literal_column('user_uuid'))\
-                      .values(**user.dict())
+async def create_user(db: Database, curr_user: Dict[str, str], user: UserCreate):
+    user_dict = user.dict()
+    user_dict.update(curr_user)
+    query = user_table.insert().values(**user_dict)
     error = None
     try:
         await db.execute(query)
     except Exception as e:
-        error = None
+        error = e
     return error
