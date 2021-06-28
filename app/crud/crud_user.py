@@ -6,6 +6,8 @@ from databases import Database
 
 from app.models.user import user_table
 from app.schemas.user import UserCreate
+from app.utils.constants import DEFAULT_DOMAIN_ALLOW_ARRAY, \
+    DEFAULT_DOMAIN_DENY_ARRAY
 
 async def get_user_by_id(db: Database, user_id: str):
     query = user_table.select().where(user_table.c.user_id == user_id)
@@ -20,6 +22,11 @@ async def get_user_by_uuid(db: Database, user_uuid: uuid.UUID):
 async def create_user(db: Database, curr_user: Dict[str, str], user: UserCreate):
     user_dict = user.dict()
     user_dict.update(curr_user)
+    # add initial domain arrays
+    user_dict.update({
+        "domain_allow_array": DEFAULT_DOMAIN_ALLOW_ARRAY,
+        "domain_deny_array": DEFAULT_DOMAIN_DENY_ARRAY
+    })
     query = user_table.insert().values(**user_dict)
     error = None
     try:
