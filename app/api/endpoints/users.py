@@ -47,4 +47,6 @@ async def get_user_public(user_uuid: uuid.UUID, db: Database = Depends(get_db)):
     output = dict(db_user)
     if not output['dob_public']:
         output['dob'] = None
+    if not output['gender_public']:
+        output['gender'] = None
     return output
