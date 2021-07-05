@@ -21,6 +21,7 @@ class UserPublic(UserBase):
 class UserPrivate(UserPublic):
     user_id: str
     email: str
+    email_public: bool
     
     dob_public: bool
     gender_public: bool
@@ -35,3 +36,15 @@ class UserPrivate(UserPublic):
 class UserCreate(UserBase):
     dob: datetime.date
     gender: str
+
+class UserUpdate(BaseModel):
+    gender: str
+    school: str
+    work: str
+    location: str
+
+    email_public: bool
+    gender_public: bool
+    school_public: bool
+    work_public: bool
+    location_public: bool

@@ -15,6 +15,7 @@ user_table = Table(
         index=True, server_default=text("uuid_generate_v4()")
     ),
     Column("email", String, unique=True, nullable=False),
+    Column("email_public", Boolean, server_default=false(), nullable=False),
 
     Column("first_name", String, nullable=False),
     Column("middle_name", String, nullable=False),

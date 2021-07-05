@@ -6,7 +6,7 @@ from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_500_
 from databases import Database
 
 from app.crud import crud_user
-from app.schemas.user import UserPublic, UserPrivate, UserCreate
+from app.schemas.user import UserPublic, UserPrivate, UserCreate, UserUpdate
 from app.api.deps import get_db
 from app.api.auth.auth import get_current_user
 
@@ -26,6 +26,23 @@ async def create_user(
     if error is not None:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR, detail=error)
     return {'success': True, 'error': None}
+
+@router.put("/me", response_model=UserPrivate)
+async def update_user(
+    user: UserUpdate,
+    db: Database = Depends(get_db),
+    curr_user: Dict[str, str] = Depends(get_current_user)
+):
+    db_user = await crud_user.get_user_by_id(db, curr_user['user_id'])
+    if db_user is None:
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND,
+                            detail="User not found")
+    error = await crud_user.update_user(db, curr_user, user)
+    if error is not None:
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR, detail=error)
+ 
+    user_info = await crud_user.get_user_by_id(db, curr_user['user_id'])
+    return user_info
 
 @router.get("/me", response_model=UserPrivate)
 async def get_user_private(
