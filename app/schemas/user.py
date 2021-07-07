@@ -12,6 +12,9 @@ class UserBase(BaseModel):
 class UserPublic(UserBase):
     user_uuid: uuid.UUID
     dob: Optional[datetime.date] = None
+    
+    description: str
+
     gender: Optional[str] = None
     school: Optional[str] = None
     work: Optional[str] = None
@@ -38,6 +41,11 @@ class UserCreate(UserBase):
     gender: str
 
 class UserUpdate(BaseModel):
+    description: str
+    share_mode: str
+    domain_allow_array: list[str]
+    domain_deny_array: list[str]
+    
     gender: str
     school: str
     work: str
