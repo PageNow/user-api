@@ -77,9 +77,15 @@ async def get_user_profile_image_upload_url(
     
     try:
         url = s3_client.generate_presigned_url('put_object',
-            Params={'Bucket': PROFILE_IMAGE_BUCKET_NAME,
-                    'Key': f'{db_user["user_uuid"]}/profile_image.png'},
-            ExpiresIn=60 * 60)
+            Params={
+                'Bucket': PROFILE_IMAGE_BUCKET_NAME,
+                'Key': f'{db_user["user_uuid"]}/profile_image.png',
+                'ACL': 'private',
+                'ContentType': 'image/png',
+            },
+            ExpiresIn=60 * 60,
+            HttpMethod='PUT'
+        )
     except ClientError as e:
         logging.error(e)
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
@@ -125,9 +131,15 @@ async def get_user_profile_image_url(
     """ Get a presigned url to get the profile image of a user from s3 """
     try:
         url = s3_client.generate_presigned_url('get_object',
-            Params={'Bucket': PROFILE_IMAGE_BUCKET_NAME,
-                    'Key': f'{user_uuid}/profile_image.png'},
-            ExpiresIn=60 * 60)
+            Params={
+                'Bucket': PROFILE_IMAGE_BUCKET_NAME,
+                'Key': f'{user_uuid}/profile_image.png',
+                # 'ACL': 'private',
+                # 'ContentType': 'image/png',
+            },
+            ExpiresIn=60 * 60,
+            HttpMethod='GET'
+        )
     except ClientError as e:
         logging.error(e)
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
