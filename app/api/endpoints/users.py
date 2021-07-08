@@ -125,7 +125,6 @@ async def get_user_public(
 @router.get("/{user_uuid}/profile-image-url")
 async def get_user_profile_image_url(
     user_uuid: uuid.UUID,
-    db: Database = Depends(get_db),
     s3_client: boto3.client = Depends(get_s3_client)
 ):
     """ Get a presigned url to get the profile image of a user from s3 """
@@ -145,3 +144,24 @@ async def get_user_profile_image_url(
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=e)
     return {'data': url}
+
+@router.delete("/me/profile-image")
+async def delete_user_profile_image(
+    db: Database = Depends(get_db),
+    curr_user: Dict[str, str] = Depends(get_current_user),
+    s3_client: boto3.client = Depends(get_s3_client)
+):
+    db_user = await crud_user.get_user_by_id(db, curr_user['user_id'])
+    if db_user is None:
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND,
+                            detail="User not found")
+    try:
+        s3_client.delete_object(
+            Bucket=PROFILE_IMAGE_BUCKET_NAME,
+            Key=f'{db_user["user_uuid"]}/profile_image.png'
+        )
+    except ClientError as e:
+        logging.error(e)
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=e)
+    return {'success': True}
