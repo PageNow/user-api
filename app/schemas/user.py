@@ -41,6 +41,10 @@ class UserCreate(UserBase):
     gender: str
 
 class UserUpdate(BaseModel):
+    first_name: str
+    middle_name: str
+    last_name: str
+
     description: str
     share_mode: str
     domain_allow_array: list[str]

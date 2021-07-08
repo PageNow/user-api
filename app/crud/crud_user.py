@@ -1,5 +1,6 @@
 import uuid
 from typing import Dict
+import datetime
 
 from sqlalchemy.sql.expression import literal_column
 from databases import Database
@@ -20,7 +21,9 @@ async def get_user_by_uuid(db: Database, user_uuid: uuid.UUID):
     return user
 
 async def create_user(
-    db: Database, curr_user: Dict[str, str], user: UserCreate
+    db: Database,
+    curr_user: Dict[str, str],
+    user: UserCreate
 ):
     user_dict = user.dict()
     user_dict.update(curr_user)
@@ -37,12 +40,30 @@ async def create_user(
         error = e
     return error
 
-async def update_user(db: Database, curr_user: Dict[str, str], user: UserUpdate):
+async def update_user(
+    db: Database,
+    curr_user: Dict[str, str],
+    user: UserUpdate
+):
     user_dict = user.dict()
     user_dict.update(curr_user)
     query = (
         user_table.update()
         .where(user_table.c.user_id == curr_user['user_id'])
+        .values(**user_dict)
+    )
+    error = None
+    try:
+        await db.execute(query)
+    except Exception as e:
+        error = e
+    return error
+
+async def update_profile_upload_time(db: Database, user_id: str):
+    user_dict = {"profile_image_uploaded_at": datetime.datetime.utcnow()}
+    query = (
+        user_table.update()
+        .where(user_table.c.user_id == user_id)
         .values(**user_dict)
     )
     error = None
