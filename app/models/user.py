@@ -1,8 +1,7 @@
-from re import L
 from sqlalchemy import Table, Column, String, Boolean, Date, DateTime, ARRAY
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
-from sqlalchemy.sql.expression import null, text, false
+from sqlalchemy.sql.expression import text, false
 
 from app.db.db import metadata
 
@@ -28,8 +27,14 @@ user_table = Table(
 
     # share mode is either 'default_all' or 'default_none'
     Column("share_mode", String, server_default="default_all", nullable=False),
-    Column("domain_allow_array", ARRAY(String), server_default="{}", nullable=False),
-    Column("domain_deny_array", ARRAY(String), server_default="{}", nullable=False),
+    Column(
+        "domain_allow_array", ARRAY(String),
+        server_default="{}", nullable=False
+    ),
+    Column(
+        "domain_deny_array", ARRAY(String),
+        server_default="{}", nullable=False
+    ),
 
     # additional Info
     Column("gender", String, nullable=False),

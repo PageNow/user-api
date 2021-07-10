@@ -1,12 +1,14 @@
-import os
-from typing import Dict, List
+from typing import Dict
 
 import requests
 from fastapi import Depends, HTTPException
 from starlette.config import Config
 from starlette.status import HTTP_403_FORBIDDEN
 
-from app.api.auth.jwt_bearer import JWKS, JWTAuthorizationCredentials, JWTBearer
+from app.api.auth.jwt_bearer import (
+    JWKS, JWTAuthorizationCredentials, JWTBearer
+)
+
 
 JWK = Dict[str, str]
 
@@ -23,6 +25,7 @@ jwks = JWKS.parse_obj(
 
 auth = JWTBearer(jwks)
 
+
 async def get_current_user(
     credentials: JWTAuthorizationCredentials = Depends(auth)
 ) -> Dict[str, str]:
@@ -32,4 +35,5 @@ async def get_current_user(
             "email": credentials.claims["email"]
         }
     except KeyError:
-        HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Username missing")
+        HTTPException(status_code=HTTP_403_FORBIDDEN,
+                      detail="Username missing")

@@ -2,7 +2,6 @@ import uuid
 from typing import Dict
 import datetime
 
-from sqlalchemy.sql.expression import literal_column
 from databases import Database
 
 from app.models.user import user_table
@@ -10,15 +9,18 @@ from app.schemas.user import UserCreate, UserUpdate
 from app.utils.constants import DEFAULT_DOMAIN_ALLOW_ARRAY, \
     DEFAULT_DOMAIN_DENY_ARRAY
 
+
 async def get_user_by_id(db: Database, user_id: str):
     query = user_table.select().where(user_table.c.user_id == user_id)
     user = await db.fetch_one(query)
     return user
 
+
 async def get_user_by_uuid(db: Database, user_uuid: uuid.UUID):
     query = user_table.select().where(user_table.c.user_uuid == user_uuid)
     user = await db.fetch_one(query)
     return user
+
 
 async def create_user(
     db: Database,
@@ -38,7 +40,9 @@ async def create_user(
         await db.execute(query)
     except Exception as e:
         error = e
+
     return error
+
 
 async def update_user(
     db: Database,
@@ -58,6 +62,7 @@ async def update_user(
     except Exception as e:
         error = e
     return error
+
 
 async def update_profile_upload_time(db: Database, user_id: str):
     user_dict = {"profile_image_uploaded_at": datetime.datetime.utcnow()}

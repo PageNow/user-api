@@ -7,6 +7,7 @@ from app.core.config import DATABASE_URL
 
 logger = logging.getLogger(__name__)
 
+
 async def connect_to_db(app: FastAPI) -> None:
     database = Database(DATABASE_URL, min_size=2, max_size=10)
 
@@ -18,6 +19,7 @@ async def connect_to_db(app: FastAPI) -> None:
         logger.warn(e)
         logger.warn("*** DB CONNECTION ERROR ***")
 
+
 async def close_db_connection(app: FastAPI) -> None:
     try:
         await app.state._db.disconnect()
@@ -25,4 +27,3 @@ async def close_db_connection(app: FastAPI) -> None:
         logger.warn("*** DB DISCONNECTION ERROR ***")
         logger.warn(e)
         logger.warn("*** DB DISCONNECTION ERROR ***")
-

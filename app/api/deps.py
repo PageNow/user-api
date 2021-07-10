@@ -15,8 +15,10 @@ s3_client = boto3.client(
     region_name=AWS_REGION_NAME
 )
 
+
 def get_db(request: Request):
     return request.app.state._db
+
 
 def get_s3_client():
     return s3_client

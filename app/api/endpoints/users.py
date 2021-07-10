@@ -3,7 +3,8 @@ from typing import Dict
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException
-from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
+from starlette.status import (HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND,
+                              HTTP_500_INTERNAL_SERVER_ERROR)
 from starlette.config import Config
 from databases import Database
 import boto3
@@ -28,11 +29,14 @@ async def create_user(
 ):
     db_user = await crud_user.get_user_by_id(db, curr_user['user_id'])
     if db_user:
-        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="User already exists")
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST,
+                            detail="User already exists")
     error = await crud_user.create_user(db, curr_user, user)
     if error is not None:
-        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR, detail=error)
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=error)
     return {'success': True, 'error': None}
+
 
 @router.put("/me", response_model=UserPrivate)
 async def update_user(
@@ -48,9 +52,10 @@ async def update_user(
     if error is not None:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=error)
- 
+
     user_info = await crud_user.get_user_by_id(db, curr_user['user_id'])
     return user_info
+
 
 @router.get("/me", response_model=UserPrivate)
 async def get_user_private(
@@ -63,6 +68,7 @@ async def get_user_private(
                             detail="User not found")
     return db_user
 
+
 @router.get("/me/profile-image-upload-url")
 async def get_user_profile_image_upload_url(
     db: Database = Depends(get_db),
@@ -74,9 +80,10 @@ async def get_user_profile_image_upload_url(
     if db_user is None:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND,
                             detail="User not found")
-    
+
     try:
-        url = s3_client.generate_presigned_url('put_object',
+        url = s3_client.generate_presigned_url(
+            'put_object',
             Params={
                 'Bucket': PROFILE_IMAGE_BUCKET_NAME,
                 'Key': f'{db_user["user_uuid"]}/profile_image.png',
@@ -99,6 +106,7 @@ async def get_user_profile_image_upload_url(
 
     return {'data': url}
 
+
 @router.get("/{user_uuid}", response_model=UserPublic)
 async def get_user_public(
     user_uuid: uuid.UUID,
@@ -117,9 +125,10 @@ async def get_user_public(
         output['school'] = None
     if not output['work_public']:
         output['work'] = None
-    if not  output['location_public']:
+    if not output['location_public']:
         output['location'] = None
     return output
+
 
 # assumes user_uuid exists
 @router.get("/{user_uuid}/profile-image-url")
@@ -129,7 +138,8 @@ async def get_user_profile_image_url(
 ):
     """ Get a presigned url to get the profile image of a user from s3 """
     try:
-        url = s3_client.generate_presigned_url('get_object',
+        url = s3_client.generate_presigned_url(
+            'get_object',
             Params={
                 'Bucket': PROFILE_IMAGE_BUCKET_NAME,
                 'Key': f'{user_uuid}/profile_image.png',
@@ -144,6 +154,7 @@ async def get_user_profile_image_url(
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=e)
     return {'data': url}
+
 
 @router.delete("/me/profile-image")
 async def delete_user_profile_image(

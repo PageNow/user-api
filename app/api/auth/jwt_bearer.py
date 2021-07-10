@@ -14,6 +14,7 @@ JWK = Dict[str, str]
 class JWKS(BaseModel):
     keys: List[JWK]
 
+
 class JWTAuthorizationCredentials(BaseModel):
     jwt_token: str
     header: Dict[str, str]
@@ -21,31 +22,43 @@ class JWTAuthorizationCredentials(BaseModel):
     signature: str
     message: str
 
+
 class JWTBearer(HTTPBearer):
     def __init__(self, jwks: JWKS, auto_error: bool = True):
         super().__init__(auto_error=auto_error)
 
         self.kid_to_jwk = {jwk["kid"]: jwk for jwk in jwks.keys}
 
-    def verify_jwk_token(self, jwt_credentials: JWTAuthorizationCredentials) -> bool:
+    def verify_jwk_token(
+        self,
+        jwt_credentials: JWTAuthorizationCredentials
+    ) -> bool:
         try:
             public_key = self.kid_to_jwk[jwt_credentials.header["kid"]]
         except KeyError:
             raise HTTPException(
-                status_code=HTTP_403_FORBIDDEN, detail="JWK public key not found"
+                status_code=HTTP_403_FORBIDDEN,
+                detail="JWK public key not found"
             )
-        
+
         key = jwk.construct(public_key)
-        decoded_signature = base64url_decode(jwt_credentials.signature.encode())
+        decoded_signature = base64url_decode(
+            jwt_credentials.signature.encode()
+        )
 
         return key.verify(jwt_credentials.message.encode(), decoded_signature)
 
-    async def __call__(self, request: Request) -> Optional[JWTAuthorizationCredentials]:
-        credentials: HTTPAuthorizationCredentials = await super().__call__(request)
+    async def __call__(
+        self,
+        request: Request
+    ) -> Optional[JWTAuthorizationCredentials]:
+        credentials: HTTPAuthorizationCredentials = \
+            await super().__call__(request)
         if credentials:
             if credentials.scheme != "Bearer":
                 raise HTTPException(
-                    status_code=HTTP_403_FORBIDDEN, detail="Wrong authentication method"
+                    status_code=HTTP_403_FORBIDDEN,
+                    detail="Wrong authentication method"
                 )
 
             jwt_token = credentials.credentials
@@ -61,9 +74,15 @@ class JWTBearer(HTTPBearer):
                     message=message
                 )
             except JWTError:
-                raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="JWK invalid")
+                raise HTTPException(
+                    status_code=HTTP_403_FORBIDDEN,
+                    detail="JWK invalid"
+                )
 
             if not self.verify_jwk_token(jwt_credentials):
-                raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="JWK invalid")
+                raise HTTPException(
+                    status_code=HTTP_403_FORBIDDEN,
+                    detail="JWK invalid"
+                )
 
             return jwt_credentials
