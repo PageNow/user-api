@@ -32,13 +32,15 @@ async def create_user(
     # add initial domain arrays
     user_dict.update({
         "domain_allow_array": DEFAULT_DOMAIN_ALLOW_ARRAY,
-        "domain_deny_array": DEFAULT_DOMAIN_DENY_ARRAY
+        "domain_deny_array": DEFAULT_DOMAIN_DENY_ARRAY,
+        "created_at": datetime.datetime.utcnow()
     })
     query = user_table.insert().values(**user_dict)
     error = None
     try:
         await db.execute(query)
     except Exception as e:
+        print(e)
         error = e
 
     return error
@@ -60,6 +62,7 @@ async def update_user(
     try:
         await db.execute(query)
     except Exception as e:
+        print(e)
         error = e
     return error
 
@@ -75,5 +78,6 @@ async def update_profile_upload_time(db: Database, user_id: str):
     try:
         await db.execute(query)
     except Exception as e:
+        print(e)
         error = e
     return error

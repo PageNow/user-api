@@ -40,6 +40,10 @@ $ docker-compose run web alembic revision --autogenerate -m "MESSAGE" # make mig
 $ docker-compose run web alembic upgrade head # migrate
 ```
 
+## TODO
+
+[] Logging errors properly
+
 ## References
 
 ### FastAPI with Postgres
