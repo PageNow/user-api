@@ -61,3 +61,23 @@ async def get_friendship_requests(db: Database, curr_user_id: str):
         print(e)
         error = e
     return {'request_arr': request_arr, 'error': error}
+
+
+async def delete_friendship_request(
+    db: Database,
+    user_id1: str,
+    user_id2: str
+):
+    query = (
+        friendship_table.delete()
+        .where((friendship_table.c.user_id1 == user_id1) &
+               (friendship_table.c.user_id2 == user_id2))
+    )
+    error = None
+    try:
+        res = await db.execute(query)
+        print(res)
+    except Exception as e:
+        print(e)
+        error = e
+    return error

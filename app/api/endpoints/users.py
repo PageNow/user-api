@@ -34,7 +34,7 @@ async def create_user(
     error = await crud_user.create_user(db, curr_user, user)
     if error is not None:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail=error)
+                            detail="Sorry, something went wrong")
     return {'success': True, 'error': None}
 
 

@@ -8,7 +8,7 @@ from databases import Database
 
 from app.crud import crud_friendship, crud_user
 from app.schemas.friendship import FriendshipRequest, FriendshipAccept, \
-    FriendshipDelete
+    FriendshipDelete, FriendshipInfo
 from app.api.deps import get_db
 from app.api.auth.auth import get_current_user
 
@@ -44,7 +44,7 @@ async def create_friendship_request(
     return {'success': True}
 
 
-@router.get("/request")
+@router.get("/request", response=FriendshipInfo)
 async def get_friendship_requests(
     db: Database = Depends(get_db),
     curr_user: Dict[str, str] = Depends(get_current_user)
@@ -63,7 +63,21 @@ async def delete_friendship_request(
     db: Database = Depends(get_db),
     curr_user: Dict[str, str] = Depends(get_current_user),
 ):
-    pass
+    if delete_request['user_id1'] is None:
+        user_id1, user_id2 = curr_user['user_id'], delete_request['user_id2']
+    elif delete_request['user_id2'] is None:
+        user_id1, user_id2 = delete_request['user_id1'], curr_user['user_id']
+    else:
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST,
+                            detail=("Invalid parameter: either user_id1 or ",
+                                    "user_id2 must be None"))
+    error = await crud_friendship.delete_friendship_request(
+        db, user_id1, user_id2
+    )
+    if error is not None:
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Sorry, something went wrong")
+    return {'success': True}
 
 
 @router.post("/accept")
@@ -88,7 +102,6 @@ async def accept_friendship_request(
     )
     if error is not None:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail="Sorry, there is something wrong")
+                            detail="Sorry, something went wrong")
 
     return {'success': True}
-
