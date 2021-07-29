@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
 from typing import Dict
 
+from fastapi import APIRouter, Depends, HTTPException
 from starlette.config import Config
 from databases import Database
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR

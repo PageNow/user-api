@@ -1,13 +1,11 @@
 from fastapi import APIRouter
 
-from app.api.endpoints import users
-from app.api.endpoints import friendship
-from app.api.endpoints import user_activity
+from app.api.endpoints import users, friendship, user_activity, search
 
 api_router = APIRouter()
 
 api_router.include_router(
-    users.router, prefix="/users", tags=["users"]
+    users.router, prefix='/users', tags=["users"]
 )
 
 api_router.include_router(
@@ -15,5 +13,9 @@ api_router.include_router(
 )
 
 api_router.include_router(
-    friendship.router, prefix="/friendship", tags=["friendship"]
+    friendship.router, prefix='/friendship', tags=["friendship"]
+)
+
+api_router.include_router(
+    search.router, prefix='/user-search', tags=['search']
 )

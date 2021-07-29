@@ -3,6 +3,7 @@ from typing import Dict
 import datetime
 
 from databases import Database
+from sqlalchemy import select
 
 from app.models.user import user_table
 from app.schemas.user import UserCreate, UserUpdate
@@ -11,8 +12,8 @@ from app.utils.constants import DEFAULT_DOMAIN_ALLOW_ARRAY, \
 
 
 async def get_user_by_id(db: Database, user_id: str):
-    query = user_table.select().where(user_table.c.user_id == user_id)
-    user = await db.fetch_one(query)
+    stmt = select(user_table).where(user_table.c.user_id == user_id)
+    user = await db.fetch_one(stmt)
     return user
 
 
@@ -20,6 +21,10 @@ async def get_user_by_uuid(db: Database, user_uuid: uuid.UUID):
     query = user_table.select().where(user_table.c.user_uuid == user_uuid)
     user = await db.fetch_one(query)
     return user
+
+
+async def get_user_by_email(db: Database, email: str):
+    pass
 
 
 async def create_user(
@@ -81,3 +86,35 @@ async def update_profile_upload_time(db: Database, user_id: str):
         print(e)
         error = e
     return error
+
+
+# functions related to searching users from all users
+
+# TODO: add limit, fetch public information only
+async def search_user_by_email(db: Database, email: str, exact: bool):
+    if exact:
+        stmt = select(user_table).where(user_table.c.email == email)
+    else:
+        stmt = select(user_table).where(user_table.c.email.like(f'%{email}%'))
+
+    try:
+        users = await db.execute(stmt)
+    except Exception as e:
+        print(e)
+        users = None
+
+    return users
+
+
+async def search_user_by_name(db: Database, name: str, exact: bool):
+    if exact:
+        stmt = select(user_table).where(user_table.c.name == name)
+    else:
+        stmt = select(user_table).where(user_table.c.name.like(f'%{name}%'))
+
+    try:
+        users = await db.execute(stmt)
+    except Exception as e:
+        print(e)
+        users = None
+    return users
