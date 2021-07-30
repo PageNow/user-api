@@ -56,6 +56,11 @@ $ docker-compose run web alembic upgrade head # migrate
 
 * https://gntrm.medium.com/jwt-authentication-with-fastapi-and-aws-cognito-1333f7f2729e
 
+### SQLAlchemy
+
+* http://www.dein.fr/writing-a-subquery-with-sqlalchemy-core.html
+* https://overiq.com/sqlalchemy-101/crud-using-sqlalchemy-core/
+
 ## DEBUG NOTES
 
 * sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) could not translate host name "db" to address: Name or service not known
