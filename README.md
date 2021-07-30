@@ -40,6 +40,8 @@ $ docker-compose run web alembic revision --autogenerate -m "MESSAGE" # make mig
 $ docker-compose run web alembic upgrade head # migrate
 ```
 
+To reset alembic versions, connect to docker postgres, drop all the tables in the datbase.
+
 ## TODO
 
 [] Logging errors properly
