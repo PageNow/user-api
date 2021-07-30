@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.endpoints import users, friendship, user_activity, search
+from app.api.endpoints import users, friendship, user_activity, user_search
 
 api_router = APIRouter()
 
@@ -17,5 +17,5 @@ api_router.include_router(
 )
 
 api_router.include_router(
-    search.router, prefix='/user-search', tags=['search']
+    user_search.router, prefix='/user-search', tags=['search']
 )

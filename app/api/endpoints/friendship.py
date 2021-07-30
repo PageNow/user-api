@@ -44,7 +44,7 @@ async def create_friendship_request(
     return {'success': True}
 
 
-@router.get("/request", response=FriendshipInfo)
+@router.get("/request", response_model=FriendshipInfo)
 async def get_friendship_requests(
     db: Database = Depends(get_db),
     curr_user: Dict[str, str] = Depends(get_current_user)

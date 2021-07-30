@@ -15,7 +15,7 @@ config = Config(".env")
 router = APIRouter()
 
 
-@router.post("/me/url-history", response=UserUrlHistory)
+@router.post("/me/url-history", response_model=UserUrlHistory)
 async def save_url_history(
     user_url_history: UserUrlHistorySave,
     db: Database = Depends(get_db),
