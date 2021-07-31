@@ -8,7 +8,7 @@ from sqlalchemy import select
 from app.models.user import user_table
 from app.schemas.user import UserCreate, UserUpdate
 from app.utils.constants import DEFAULT_DOMAIN_ALLOW_ARRAY, \
-    DEFAULT_DOMAIN_DENY_ARRAY
+    DEFAULT_DOMAIN_DENY_ARRAY, SEARCH_MAX_LIMIT
 
 
 async def get_user_by_id(db: Database, user_id: str):
@@ -91,11 +91,28 @@ async def update_profile_upload_time(db: Database, user_id: str):
 # functions related to searching users from all users
 
 # TODO: add limit, fetch public information only
-async def search_user_by_email(db: Database, email: str, exact: bool):
+async def search_user_by_email(
+    db: Database,
+    email: str,
+    exact: bool,
+    limit: int,
+    offset: int = 0
+):
+    limit = min(SEARCH_MAX_LIMIT, limit)
     if exact:
-        stmt = select(user_table).where(user_table.c.email == email)
+        stmt = (
+            select(user_table)
+            .where(user_table.c.email == email)
+            .limit(limit)
+            .offset(offset)
+        )
     else:
-        stmt = select(user_table).where(user_table.c.email.like(f'%{email}%'))
+        stmt = (
+            select(user_table)
+            .where(user_table.c.email.like(f'%{email}%'))
+            .limit(limit)
+            .offset(offset)
+        )
 
     try:
         users = await db.execute(stmt)
@@ -106,11 +123,28 @@ async def search_user_by_email(db: Database, email: str, exact: bool):
     return users
 
 
-async def search_user_by_name(db: Database, name: str, exact: bool):
+async def search_user_by_name(
+    db: Database,
+    name: str,
+    exact: bool,
+    limit: int,
+    offset: int = 0
+):
+    limit = min(SEARCH_MAX_LIMIT, limit)
     if exact:
-        stmt = select(user_table).where(user_table.c.name == name)
+        stmt = (
+            select(user_table)
+            .where(user_table.c.name == name)
+            .limit(limit)
+            .offset(offset)
+        )
     else:
-        stmt = select(user_table).where(user_table.c.name.like(f'%{name}%'))
+        stmt = (
+            select(user_table)
+            .where(user_table.c.name.like(f'%{name}%'))
+            .limit(limit)
+            .offset(offset)
+        )
 
     try:
         users = await db.execute(stmt)

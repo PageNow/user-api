@@ -6,6 +6,7 @@ from databases import Database
 from app.models.friendship import friendship_table
 from app.models.user import user_table
 from app.schemas.friendship import FriendshipRequest, FriendshipAccept
+from app.utils.constants import SEARCH_MAX_LIMIT
 
 
 async def create_friendship_request(
@@ -107,8 +108,8 @@ async def get_all_friends(db: Database, user_id: str):
 async def get_friends_by_name(
     db: Database,
     user_id: str,
-    first_name: str,
-    last_name: str
+    name: str,
+    limit: int
 ):
     pass
 
@@ -118,8 +119,10 @@ async def get_friends_by_email(
     user_id: str,
     email: str,
     exact: bool,
-    limit: int = 10
+    limit: int,
+    offset: int = 0
 ):
+    limit = min(SEARCH_MAX_LIMIT, limit)
     # filter user_table with the given email to reduce join operation size
     if exact:
         user_email_table = (
@@ -130,6 +133,7 @@ async def get_friends_by_email(
         user_email_table = (
             user_table.select()
             .where(user_table.c.email.like(f'%{email}%'))
+            .limit(100)
         )
     # friends of user whose user_id == user_id1 (user_id1 is user_id)
     user_id1_friendship_table = (
@@ -150,7 +154,9 @@ async def get_friends_by_email(
                 user_table.c.user_id == user_id1_friendship_table.c.user_id2
             )
         )
-    ).limit(limit)
+        .limit(limit)
+        .offset(offset)
+    )
     # join friendship_table user_id1 == user_table.user_id
     stmt_user_id2 = (
         select([text('*')])
@@ -160,13 +166,16 @@ async def get_friends_by_email(
                 user_table.c.user_id == user_id2_friendship_table.c.user_id1
             )
         )
-    ).limit(limit)
-    res = None
+        .limit(limit)
+        .offset(offset)
+    )
+    friends, error = None, None
     try:
         res1 = await db.fetch_all(stmt_user_id1)
         res2 = await db.fetch_all(stmt_user_id2)
-        res = res1 + res2
+        friends = res1 + res2
     except Exception as e:
         print(e)
+        error = e
 
-    return res
+    return {'friends': friends, 'error': error}

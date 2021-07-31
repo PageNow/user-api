@@ -77,3 +77,5 @@ DEFAULT_DOMAIN_DENY_ARRAY = [
     'gmail.com',
     'mail.google.com'
 ]
+
+SEARCH_MAX_LIMIT = 20
