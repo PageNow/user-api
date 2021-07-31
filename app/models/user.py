@@ -47,5 +47,6 @@ user_table = Table(
     Column("location_public", Boolean, server_default=false(), nullable=False),
     Column("description", String, server_default='', nullable=False),
 
-    Column("profile_image_uploaded_at", DateTime, nullable=True)
+    Column("profile_image_uploaded_at", DateTime, nullable=True),
+    Column("profile_image_extension", String, nullable=True)
 )

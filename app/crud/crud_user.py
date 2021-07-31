@@ -3,7 +3,7 @@ from typing import Dict
 import datetime
 
 from databases import Database
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from app.models.user import user_table
 from app.schemas.user import UserCreate, UserUpdate
@@ -12,7 +12,7 @@ from app.utils.constants import DEFAULT_DOMAIN_ALLOW_ARRAY, \
 
 
 async def get_user_by_id(db: Database, user_id: str):
-    stmt = select(user_table).where(user_table.c.user_id == user_id)
+    stmt = select([text('*')]).where(user_table.c.user_id == user_id)
     user = await db.fetch_one(stmt)
     return user
 
@@ -72,8 +72,15 @@ async def update_user(
     return error
 
 
-async def update_profile_upload_time(db: Database, user_id: str):
-    user_dict = {"profile_image_uploaded_at": datetime.datetime.utcnow()}
+async def update_profile_upload_time(
+    db: Database,
+    user_id: str,
+    image_ext: str
+):
+    user_dict = {
+        "profile_image_uploaded_at": datetime.datetime.utcnow(),
+        "profile_image_extension": image_ext
+    }
     query = (
         user_table.update()
         .where(user_table.c.user_id == user_id)

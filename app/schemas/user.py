@@ -23,6 +23,9 @@ class UserPublic(UserBase):
     location: Optional[str] = None
     description: str
 
+    profile_image_uploaded_at: Optional[datetime.datetime] = None
+    profile_image_extension: Optional[str] = None
+
 
 class UserPrivate(UserPublic):
     user_id: str

@@ -17,5 +17,5 @@ api_router.include_router(
 )
 
 api_router.include_router(
-    user_search.router, prefix='/user-search', tags=['search']
+    user_search.router, prefix='/users/search', tags=['user-search']
 )
