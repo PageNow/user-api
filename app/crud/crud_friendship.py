@@ -7,6 +7,9 @@ from app.models.friendship import friendship_table
 from app.models.user import user_table
 from app.schemas.friendship import FriendshipRequest, FriendshipAccept
 from app.utils.constants import SEARCH_MAX_LIMIT
+from app.core.logger import logging
+
+logger = logging.getLogger(__name__)
 
 
 async def create_friendship_request(
@@ -128,13 +131,13 @@ async def get_friends_by_email(
         user_email_table = (
             user_table.select()
             .where(user_table.c.email == email)
-        )
+        ).alias("user_email_table")
     else:
         user_email_table = (
             user_table.select()
             .where(user_table.c.email.like(f'%{email}%'))
             .limit(100)
-        )
+        ).alias("user_email_table")
     # friends of user whose user_id == user_id1 (user_id1 is user_id)
     user_id1_friendship_table = (
         friendship_table.select()
@@ -151,8 +154,9 @@ async def get_friends_by_email(
         .select_from(
             user_id1_friendship_table.join(
                 user_email_table,
-                user_table.c.user_id == user_id1_friendship_table.c.user_id2
-            )
+                user_email_table.c.user_id
+                == user_id1_friendship_table.c.user_id2
+            ).alias("user_id1_friendship_table_filtered")
         )
         .limit(limit)
         .offset(offset)
@@ -163,8 +167,9 @@ async def get_friends_by_email(
         .select_from(
             user_id2_friendship_table.join(
                 user_email_table,
-                user_table.c.user_id == user_id2_friendship_table.c.user_id1
-            )
+                user_email_table.c.user_id
+                == user_id2_friendship_table.c.user_id1
+            ).alias("user_id2_friendship_table_filtered")
         )
         .limit(limit)
         .offset(offset)
@@ -175,7 +180,7 @@ async def get_friends_by_email(
         res2 = await db.fetch_all(stmt_user_id2)
         friends = res1 + res2
     except Exception as e:
-        print(e)
+        logging.error(e)
         error = e
 
     return {'friends': friends, 'error': error}

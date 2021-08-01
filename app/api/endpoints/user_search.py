@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException
 from starlette.config import Config
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
@@ -5,6 +7,7 @@ from databases import Database
 
 from app.api.deps import get_db
 from app.crud import crud_user
+from app.schemas.user import UserSummary
 
 config = Config(".env")
 
@@ -19,15 +22,15 @@ async def search_users_by_name(
     offset: int = 0,
     db: Database = Depends(get_db)
 ):
-    users = await crud_user.search_user_by_name(
+    res = await crud_user.search_user_by_name(
         db, name, exact, limit, offset=offset)
-    if users is None:
+    if res['error'] is not None:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Sorry, something went wrong")
-    return users
+    return res['users']
 
 
-@router.get("/email/{email}")
+@router.get("/email/{email}", response_model=List[UserSummary])
 async def search_users_by_email(
     email: str,
     exact: bool = False,
@@ -35,9 +38,9 @@ async def search_users_by_email(
     offset: int = 0,
     db: Database = Depends(get_db)
 ):
-    users = await crud_user.search_user_by_email(
+    res = await crud_user.search_user_by_email(
         db, email, exact, limit, offset=offset)
-    if users is None:
+    if res['error'] is not None:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Sorry, something went wrong")
-    return users
+    return res['users']

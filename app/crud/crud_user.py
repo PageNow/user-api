@@ -9,6 +9,7 @@ from app.models.user import user_table
 from app.schemas.user import UserCreate, UserUpdate
 from app.utils.constants import DEFAULT_DOMAIN_ALLOW_ARRAY, \
     DEFAULT_DOMAIN_DENY_ARRAY, SEARCH_MAX_LIMIT
+from app.core.logger import logging
 
 
 async def get_user_by_id(db: Database, user_id: str):
@@ -108,26 +109,27 @@ async def search_user_by_email(
     limit = min(SEARCH_MAX_LIMIT, limit)
     if exact:
         stmt = (
-            select(user_table)
+            select([text('*')])
+            .select_from(user_table)
             .where(user_table.c.email == email)
             .limit(limit)
             .offset(offset)
         )
     else:
         stmt = (
-            select(user_table)
+            select([text('*')])
             .where(user_table.c.email.like(f'%{email}%'))
-            .limit(limit)
+            .limit(10)
             .offset(offset)
         )
 
+    users, error = None, None
     try:
-        users = await db.execute(stmt)
+        users = await db.fetch_all(stmt)
     except Exception as e:
-        print(e)
-        users = None
-
-    return users
+        logging.error(e)
+        error = None
+    return {'users': users, 'error': error}
 
 
 async def search_user_by_name(
@@ -140,22 +142,23 @@ async def search_user_by_name(
     limit = min(SEARCH_MAX_LIMIT, limit)
     if exact:
         stmt = (
-            select(user_table)
+            select([text('*')])
             .where(user_table.c.name == name)
             .limit(limit)
             .offset(offset)
         )
     else:
         stmt = (
-            select(user_table)
+            select([text('*')])
             .where(user_table.c.name.like(f'%{name}%'))
             .limit(limit)
             .offset(offset)
         )
 
+    users, error = None, None
     try:
-        users = await db.execute(stmt)
+        users = await db.fetch_all(stmt)
     except Exception as e:
-        print(e)
-        users = None
-    return users
+        logging.error(e)
+        error = e
+    return {'users': users, 'error': error}

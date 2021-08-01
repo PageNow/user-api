@@ -11,20 +11,21 @@ class UserBase(BaseModel):
     last_name: str
 
 
-class UserPublic(UserBase):
+class UserSummary(UserBase):
     user_uuid: uuid.UUID
-    dob: Optional[datetime.date] = None
-
     description: str
+
+    profile_image_uploaded_at: Optional[datetime.datetime] = None
+    profile_image_extension: Optional[str] = None
+
+
+class UserPublic(UserSummary):
+    dob: Optional[datetime.date] = None
 
     gender: Optional[str] = None
     school: Optional[str] = None
     work: Optional[str] = None
     location: Optional[str] = None
-    description: str
-
-    profile_image_uploaded_at: Optional[datetime.datetime] = None
-    profile_image_extension: Optional[str] = None
 
 
 class UserPrivate(UserPublic):
