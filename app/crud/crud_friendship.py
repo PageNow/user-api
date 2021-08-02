@@ -112,7 +112,9 @@ async def get_friends_by_name(
     db: Database,
     user_id: str,
     name: str,
-    limit: int
+    exact: bool,
+    limit: int,
+    offset: int = 0
 ):
     pass
 

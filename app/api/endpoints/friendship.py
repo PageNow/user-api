@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException
 from starlette.config import Config
@@ -9,6 +9,7 @@ from databases import Database
 from app.crud import crud_friendship, crud_user
 from app.schemas.friendship import FriendshipRequest, FriendshipAccept, \
     FriendshipDelete, FriendshipInfo
+from app.schemas.user import UserSummary
 from app.api.deps import get_db
 from app.api.auth.auth import get_current_user
 
@@ -109,7 +110,7 @@ async def accept_friendship_request(
 
 
 # search friends using email
-@router.get("/search/email/{email}")
+@router.get("/search/email/{email}", response_model=List[UserSummary])
 async def search_friends_by_email(
     email: str,
     exact: bool = False,
@@ -118,6 +119,12 @@ async def search_friends_by_email(
     db: Database = Depends(get_db),
     curr_user: Dict[str, str] = Depends(get_current_user)
 ):
+    if limit < 0 or offset < 0:
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST,
+                            detail="Limit and offset cannot be negative")
+    if limit == 0:
+        return []
+
     res = await crud_friendship.get_friends_by_email(
         db, curr_user['user_id'], email, exact, limit, offset=offset)
     if res['error'] is not None:
@@ -128,7 +135,7 @@ async def search_friends_by_email(
 
 
 # search friends using name
-@router.get("/search/name/{name}")
+@router.get("/search/name/{name}", response_model=List[UserSummary])
 async def search_friends_by_name(
     name: str,
     exact: bool = False,
@@ -137,8 +144,14 @@ async def search_friends_by_name(
     db: Database = Depends(get_db),
     curr_user: Dict[str, str] = Depends(get_current_user)
 ):
+    if limit < 0 or offset < 0:
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST,
+                            detail="Limit and offset cannot be negative")
+    if limit == 0:
+        return []
+
     res = await crud_friendship.get_friends_by_name(
-        db, curr_user['user_id'], name, limit, offset=offset)
+        db, curr_user['user_id'], name, exact, limit, offset=offset)
     if res['error'] is not None:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail='Sorry, something went wrong')
