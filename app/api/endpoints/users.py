@@ -133,7 +133,7 @@ async def get_user_profile_image_upload_url(
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=error)
 
-    return {'data': url}
+    return url
 
 
 # assumes user_uuid exists
@@ -158,7 +158,7 @@ async def get_user_profile_image_url(
         logging.error(e)
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=e)
-    return {'data': url}
+    return url
 
 
 @router.delete("/me/profile-image")

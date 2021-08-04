@@ -1,4 +1,4 @@
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Any
 
 from pydantic import BaseModel
 from fastapi import HTTPException
@@ -18,7 +18,7 @@ class JWKS(BaseModel):
 class JWTAuthorizationCredentials(BaseModel):
     jwt_token: str
     header: Dict[str, str]
-    claims: Dict[str, str]
+    claims: Dict[str, Any]
     signature: str
     message: str
 
