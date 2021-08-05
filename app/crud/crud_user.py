@@ -13,7 +13,11 @@ from app.core.logger import logging
 
 
 async def get_user_by_id(db: Database, user_id: str):
-    stmt = select([text('*')]).where(user_table.c.user_id == user_id)
+    stmt = (
+        select([text('*')])
+        .select_from(user_table)
+        .where(user_table.c.user_id == user_id)
+    )
     user = await db.fetch_one(stmt)
     return user
 
@@ -118,6 +122,7 @@ async def search_user_by_email(
     else:
         stmt = (
             select([text('*')])
+            .select_from(user_table)
             .where(user_table.c.email.like(f'%{email}%'))
             .limit(10)
             .offset(offset)

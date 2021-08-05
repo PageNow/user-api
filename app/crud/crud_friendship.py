@@ -1,6 +1,6 @@
 import datetime
 
-from sqlalchemy import select, text
+from sqlalchemy import select
 from databases import Database
 
 from app.models.friendship import friendship_table
@@ -27,7 +27,7 @@ async def create_friendship_request(
     try:
         await db.execute(query)
     except Exception as e:
-        print(e)
+        logging.error(e)
         error = e
     return error
 
@@ -49,12 +49,32 @@ async def accept_friendship_request(
     try:
         await db.execute(query)
     except Exception as e:
-        print(e)
+        logging.error(e)
         error = e
     return error
 
 
-async def get_friendship_requests(db: Database, curr_user_id: str):
+async def check_friendship_request(
+    db: Database,
+    curr_user_id: str,
+    user_id: str
+):
+    query = (
+        friendship_table.select()
+        .where((friendship_table.c.user_id1 == curr_user_id)
+               & (friendship_table.c.user_id2 == user_id))
+    )
+    request, error = None, None
+    try:
+        request = await db.fetch_one(query)
+        print(request)
+    except Exception as e:
+        logging.error(e)
+        error = e
+    return {'request': request, 'error': error}
+
+
+async def get_all_friendship_requests(db: Database, curr_user_id: str):
     """ Get friendship requests that the current user has not accepted yet. """
     query = (
         friendship_table.select()
@@ -64,7 +84,7 @@ async def get_friendship_requests(db: Database, curr_user_id: str):
     try:
         request_arr = await db.fetch_all(query)
     except Exception as e:
-        print(e)
+        logging.error(e)
         error = e
     return {'request_arr': request_arr, 'error': error}
 
@@ -84,13 +104,12 @@ async def delete_friendship_request(
         res = await db.execute(query)
         print(res)
     except Exception as e:
-        print(e)
+        logging.error(e)
         error = e
     return error
 
 
 # functions related to getting friends (used for search, etc.)
-
 async def get_all_friends(db: Database, user_id: str):
     query = (
         friendship_table.select()
@@ -98,14 +117,13 @@ async def get_all_friends(db: Database, user_id: str):
                (friendship_table.c.user_id2 == user_id)) &
                (friendship_table.c.accepted_at is not None))
     )
-    error = None
+    friends, error = None, None
     try:
-        res = await db.execute(query)
-        print(res)
+        friends = await db.execute(query)
     except Exception as e:
-        print(e)
+        logging.error(e)
         error = e
-    return error
+    return {'friends': friends, 'error': error}
 
 
 async def get_friends_by_name(
@@ -152,7 +170,13 @@ async def get_friends_by_email(
     ).alias("user_id2_friendship_table")
     # join friendship_table user_id2 == user_table.user_id
     stmt_user_id1 = (
-        select([text('*')])
+        select([
+            user_email_table.c.first_name, user_email_table.c.middle_name,
+            user_email_table.c.last_name, user_email_table.c.user_uuid,
+            user_email_table.c.description,
+            user_email_table.c.profile_image_uploaded_at,
+            user_email_table.c.profile_image_extension
+        ])
         .select_from(
             user_id1_friendship_table.join(
                 user_email_table,
@@ -165,7 +189,13 @@ async def get_friends_by_email(
     )
     # join friendship_table user_id1 == user_table.user_id
     stmt_user_id2 = (
-        select([text('*')])
+        select([
+            user_email_table.c.first_name, user_email_table.c.middle_name,
+            user_email_table.c.last_name, user_email_table.c.user_uuid,
+            user_email_table.c.description,
+            user_email_table.c.profile_image_uploaded_at,
+            user_email_table.c.profile_image_extension
+        ])
         .select_from(
             user_id2_friendship_table.join(
                 user_email_table,
@@ -184,5 +214,4 @@ async def get_friends_by_email(
     except Exception as e:
         logging.error(e)
         error = e
-
     return {'friends': friends, 'error': error}

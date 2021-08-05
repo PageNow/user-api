@@ -45,17 +45,35 @@ async def create_friendship_request(
     return {'success': True}
 
 
+@router.get("/request/{user_id}")
+async def check_friendship_request(
+    user_id: str,
+    db: Database = Depends(get_db),
+    curr_user: Dict[str, str] = Depends(get_current_user),
+):
+    if user_id == curr_user['user_id']:
+        return None
+
+    res = await crud_friendship.check_friendship_request(
+        db, curr_user['user_id'], user_id)
+    if res['error'] is not None:
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Sorry, something went wrong")
+    return res['request']
+
+
 # get friendship requests that the current user has not accepted yet
-@router.get("/request", response_model=FriendshipInfo)
+@router.get("/requests", response_model=FriendshipInfo)
 async def get_friendship_requests(
     db: Database = Depends(get_db),
     curr_user: Dict[str, str] = Depends(get_current_user)
 ):
-    res = await crud_friendship.get_friendship_requests(
+    res = await crud_friendship.get_all_friendship_requests(
         db, curr_user['user_id']
     )
     if res['error'] is not None:
-        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Sorry, something went wrong")
     return res['request_arr']
 
 

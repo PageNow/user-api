@@ -34,6 +34,7 @@ async def search_users_by_email(
     if res['error'] is not None:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Sorry, something went wrong")
+    print(res)
     return res['users']
 
 
