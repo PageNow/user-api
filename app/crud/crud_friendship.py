@@ -67,7 +67,6 @@ async def check_friendship_request(
     request, error = None, None
     try:
         request = await db.fetch_one(query)
-        print(request)
     except Exception as e:
         logging.error(e)
         error = e
@@ -101,8 +100,7 @@ async def delete_friendship_request(
     )
     error = None
     try:
-        res = await db.execute(query)
-        print(res)
+        await db.execute(query)
     except Exception as e:
         logging.error(e)
         error = e
@@ -172,8 +170,8 @@ async def get_friends_by_email(
     stmt_user_id1 = (
         select([
             user_email_table.c.first_name, user_email_table.c.middle_name,
-            user_email_table.c.last_name, user_email_table.c.user_uuid,
-            user_email_table.c.description,
+            user_email_table.c.last_name, user_email_table.c.user_id,
+            user_email_table.c.user_uuid, user_email_table.c.description,
             user_email_table.c.profile_image_uploaded_at,
             user_email_table.c.profile_image_extension
         ])

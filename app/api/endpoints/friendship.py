@@ -3,6 +3,7 @@ from typing import Dict, List
 from fastapi import APIRouter, Depends, HTTPException
 from starlette.config import Config
 from starlette.status import (HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED,
+                              HTTP_403_FORBIDDEN,
                               HTTP_500_INTERNAL_SERVER_ERROR)
 from databases import Database
 
@@ -46,7 +47,7 @@ async def create_friendship_request(
 
 
 @router.get("/request/{user_id}")
-async def check_friendship_request(
+async def get_friendship_info(
     user_id: str,
     db: Database = Depends(get_db),
     curr_user: Dict[str, str] = Depends(get_current_user),
@@ -83,16 +84,21 @@ async def delete_friendship_request(
     db: Database = Depends(get_db),
     curr_user: Dict[str, str] = Depends(get_current_user),
 ):
-    if delete_request['user_id1'] is None:
-        user_id1, user_id2 = curr_user['user_id'], delete_request['user_id2']
-    elif delete_request['user_id2'] is None:
-        user_id1, user_id2 = delete_request['user_id1'], curr_user['user_id']
-    else:
+    delete_request = delete_request.dict()
+    if delete_request['user_id1'] is None \
+            or delete_request['user_id2'] is None:
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST,
-                            detail=("Invalid parameter: either user_id1 or ",
-                                    "user_id2 must be None"))
+                            detail="user_id must not be None")
+    if delete_request['user_id1'] == delete_request['user_id2']:
+        raise HTTPException(status=HTTP_400_BAD_REQUEST,
+                            detail='Two user ids must be different')
+    if curr_user['user_id'] not in (delete_request['user_id1'],
+                                    delete_request['user_id2']):
+        raise HTTPException(status_code=HTTP_403_FORBIDDEN,
+                            detail="Not authorized to make the request")
+
     error = await crud_friendship.delete_friendship_request(
-        db, user_id1, user_id2
+        db, delete_request['user_id1'], delete_request['user_id2']
     )
     if error is not None:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,

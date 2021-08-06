@@ -12,6 +12,7 @@ class UserBase(BaseModel):
 
 
 class UserSummary(UserBase):
+    user_id: str
     user_uuid: uuid.UUID
     description: str
 
@@ -29,7 +30,6 @@ class UserPublic(UserSummary):
 
 
 class UserPrivate(UserPublic):
-    user_id: str
     email: str
     email_public: bool
 
