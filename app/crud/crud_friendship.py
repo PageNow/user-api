@@ -77,7 +77,8 @@ async def get_all_friendship_requests(db: Database, curr_user_id: str):
     """ Get friendship requests that the current user has not accepted yet. """
     query = (
         friendship_table.select()
-        .where(friendship_table.c.user_id2 == curr_user_id)
+        .where((friendship_table.c.user_id2 == curr_user_id) &
+               (friendship_table.c.accepted_at.is_(None)))
     )
     request_arr, error = None, None
     try:
@@ -88,7 +89,43 @@ async def get_all_friendship_requests(db: Database, curr_user_id: str):
     return {'request_arr': request_arr, 'error': error}
 
 
-async def delete_friendship_request(
+async def get_all_friendship_request_users(db: Database, curr_user_id: str):
+    """
+    Get user summary info of users who sent friend requests but has not
+    been accepted yet.
+    user_id1 is the other user and user_id2 is the current user
+    in friendship table.
+    """
+    friendship_table_filtered = (
+        friendship_table.select()
+        .where((friendship_table.c.user_id2 == curr_user_id) &
+               (friendship_table.c.accepted_at.is_(None)))
+    ).alias('friendship_table_filtered')
+    query = (
+        select([
+            user_table.c.user_id, user_table.c.user_uuid,
+            user_table.c.first_name, user_table.c.middle_name,
+            user_table.c.last_name, user_table.c.description,
+            user_table.c.profile_image_uploaded_at,
+            user_table.c.profile_image_extension
+        ])
+        .select_from(
+            user_table.join(
+                friendship_table_filtered,
+                friendship_table_filtered.c.user_id1 == user_table.c.user_id
+            )
+        )
+    )
+    users, error = None, None
+    try:
+        users = await db.fetch_all(query)
+    except Exception as e:
+        logging.error(e)
+        error = e
+    return {'users': users, 'error': error}
+
+
+async def delete_friendship(
     db: Database,
     user_id1: str,
     user_id2: str
@@ -169,9 +206,9 @@ async def get_friends_by_email(
     # join friendship_table user_id2 == user_table.user_id
     stmt_user_id1 = (
         select([
+            user_email_table.c.user_id, user_email_table.c.user_uuid,
             user_email_table.c.first_name, user_email_table.c.middle_name,
-            user_email_table.c.last_name, user_email_table.c.user_id,
-            user_email_table.c.user_uuid, user_email_table.c.description,
+            user_email_table.c.last_name, user_email_table.c.description,
             user_email_table.c.profile_image_uploaded_at,
             user_email_table.c.profile_image_extension
         ])
@@ -180,7 +217,7 @@ async def get_friends_by_email(
                 user_email_table,
                 user_email_table.c.user_id
                 == user_id1_friendship_table.c.user_id2
-            ).alias("user_id1_friendship_table_filtered")
+            )
         )
         .limit(limit)
         .offset(offset)
@@ -188,9 +225,9 @@ async def get_friends_by_email(
     # join friendship_table user_id1 == user_table.user_id
     stmt_user_id2 = (
         select([
+            user_email_table.c.user_id, user_email_table.c.user_uuid,
             user_email_table.c.first_name, user_email_table.c.middle_name,
-            user_email_table.c.last_name, user_email_table.c.user_uuid,
-            user_email_table.c.description,
+            user_email_table.c.last_name, user_email_table.c.description,
             user_email_table.c.profile_image_uploaded_at,
             user_email_table.c.profile_image_extension
         ])
@@ -199,7 +236,7 @@ async def get_friends_by_email(
                 user_email_table,
                 user_email_table.c.user_id
                 == user_id2_friendship_table.c.user_id1
-            ).alias("user_id2_friendship_table_filtered")
+            )
         )
         .limit(limit)
         .offset(offset)

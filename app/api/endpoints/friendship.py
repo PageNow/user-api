@@ -9,7 +9,7 @@ from databases import Database
 
 from app.crud import crud_friendship, crud_user
 from app.schemas.friendship import FriendshipRequest, FriendshipAccept, \
-    FriendshipDelete, FriendshipInfo
+    FriendshipDelete
 from app.schemas.user import UserSummary
 from app.api.deps import get_db
 from app.api.auth.auth import get_current_user
@@ -63,26 +63,27 @@ async def get_friendship_info(
     return res['request']
 
 
-# get friendship requests that the current user has not accepted yet
-@router.get("/requests", response_model=FriendshipInfo)
+# get userInfo of users who sent friendship requests that the current user
+# has not accepted yet
+@router.get("/requests", response_model=List[UserSummary])
 async def get_friendship_requests(
     db: Database = Depends(get_db),
     curr_user: Dict[str, str] = Depends(get_current_user)
 ):
-    res = await crud_friendship.get_all_friendship_requests(
+    res = await crud_friendship.get_all_friendship_request_users(
         db, curr_user['user_id']
     )
     if res['error'] is not None:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Sorry, something went wrong")
-    return res['request_arr']
+    return res['users']
 
 
 @router.post("/delete")
-async def delete_friendship_request(
+async def delete_friendship(
     delete_request: FriendshipDelete,
     db: Database = Depends(get_db),
-    curr_user: Dict[str, str] = Depends(get_current_user),
+    curr_user: Dict[str, str] = Depends(get_current_user)
 ):
     delete_request = delete_request.dict()
     if delete_request['user_id1'] is None \
@@ -97,8 +98,27 @@ async def delete_friendship_request(
         raise HTTPException(status_code=HTTP_403_FORBIDDEN,
                             detail="Not authorized to make the request")
 
-    error = await crud_friendship.delete_friendship_request(
+    error = await crud_friendship.delete_friendship(
         db, delete_request['user_id1'], delete_request['user_id2']
+    )
+    if error is not None:
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Sorry, something went wrong")
+    return {'success': True}
+
+
+@router.delete("/request/{user_id}")
+async def delete_friendship_request(
+    user_id: str,
+    db: Database = Depends(get_db),
+    curr_user: Dict[str, str] = Depends(get_current_user)
+):
+    db_user = await crud_user.get_user_by_id(db, user_id)
+    if db_user is None:
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,
+                            detail="User not found")
+    error = await crud_friendship.delete_friendship(
+        db, user_id, curr_user['user_id']
     )
     if error is not None:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
@@ -118,7 +138,7 @@ async def accept_friendship_request(
                             detail=("User cannot accept friend ",
                                     "request to oneself"))
 
-    db_user1 = await crud_user.get_user_by_id(user_id1)
+    db_user1 = await crud_user.get_user_by_id(db, user_id1)
     if db_user1 is None:
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,
                             detail="User not found")

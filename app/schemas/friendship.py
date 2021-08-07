@@ -18,8 +18,8 @@ class FriendshipAccept(BaseModel):
 
 
 class FriendshipDelete(BaseModel):
-    user_id1: Optional[str]
-    user_id2: Optional[str]
+    user_id1: str
+    user_id2: str
 
 
 class FriendshipInfo(FriendshipBase):
