@@ -12,6 +12,27 @@ from app.core.logger import logging
 logger = logging.getLogger(__name__)
 
 
+async def check_friendship(
+    db: Database,
+    curr_user_id: str,
+    user_id: str
+):
+    query = (
+        friendship_table.select()
+        .where(((friendship_table.c.user_id1 == curr_user_id)
+                & (friendship_table.c.user_id2 == user_id)) |
+               ((friendship_table.c.user_id1 == user_id)
+                & (friendship_table.c.user_id2 == curr_user_id)))
+    )
+    request, error = None, None
+    try:
+        request = await db.fetch_one(query)
+    except Exception as e:
+        logging.error(e)
+        error = e
+    return {'request': request, 'error': error}
+
+
 async def create_friendship_request(
     db: Database,
     curr_user_id: str,

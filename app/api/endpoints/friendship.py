@@ -1,4 +1,5 @@
 from typing import Dict, List
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from starlette.config import Config
@@ -17,6 +18,23 @@ from app.api.auth.auth import get_current_user
 config = Config(".env")
 
 router = APIRouter()
+
+
+@router.get("/check/{user_id}")
+async def check_friendship(
+    user_id: str,
+    db: Database = Depends(get_db),
+    curr_user: Dict[str, str] = Depends(get_current_user)
+):
+    if user_id == curr_user['user_id']:
+        return None
+
+    res = await crud_friendship.check_friendship(
+        db, curr_user['user_id'], user_id)
+    if res['error'] is not None:
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Sorry, something went wrong")
+    return res['request']
 
 
 @router.post("/request")
@@ -70,12 +88,14 @@ async def get_friendship_requests(
     db: Database = Depends(get_db),
     curr_user: Dict[str, str] = Depends(get_current_user)
 ):
+    print(curr_user)
     res = await crud_friendship.get_all_friendship_request_users(
         db, curr_user['user_id']
     )
     if res['error'] is not None:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Sorry, something went wrong")
+    logging.info(res)
     return res['users']
 
 
