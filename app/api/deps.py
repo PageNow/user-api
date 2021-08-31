@@ -1,3 +1,5 @@
+import concurrent.futures
+
 from starlette.requests import Request
 from starlette.config import Config
 import boto3
@@ -14,6 +16,7 @@ s3_client = boto3.client(
     aws_secret_access_key=AWS_SECRETY_ACCESS_KEY,
     region_name=AWS_REGION_NAME
 )
+executor = concurrent.futures.ThreadPoolExecutor()
 
 
 def get_db(request: Request):
@@ -22,3 +25,7 @@ def get_db(request: Request):
 
 def get_s3_client():
     return s3_client
+
+
+def get_executor():
+    return executor

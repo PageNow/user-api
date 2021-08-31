@@ -13,9 +13,6 @@ RUN apt-get update \
   && apt-get -y install gcc postgresql \
   && apt-get clean
 
-# postgres initialization (e.g. installing extensions)
-COPY ./db_init.sql /docker-entrypoint-initdb.d/
-
 # install dependencies
 RUN pip install --upgrade pip
 COPY ./requirements.txt .

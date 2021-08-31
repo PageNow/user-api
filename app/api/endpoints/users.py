@@ -1,6 +1,8 @@
-import uuid
-from typing import Dict
+from concurrent.futures.thread import ThreadPoolExecutor
+from typing import Dict, List
 import logging
+import asyncio
+import functools
 
 from fastapi import APIRouter, Depends, HTTPException
 from starlette.status import (HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND,
@@ -12,8 +14,9 @@ from botocore.exceptions import ClientError
 
 from app.crud import crud_user
 from app.schemas.user import UserPublic, UserPrivate, UserCreate, UserUpdate
-from app.api.deps import get_db, get_s3_client
+from app.api.deps import get_db, get_executor, get_s3_client
 from app.api.auth.auth import get_current_user
+from app.utils.helpers import convert_to_user_info_public
 
 config = Config(".env")
 PROFILE_IMAGE_BUCKET_NAME = config("PROFILE_IMAGE_BUCKET_NAME", cast=str)
@@ -74,27 +77,31 @@ async def get_user_private(
     return db_user
 
 
-@router.get("/{user_uuid}", response_model=UserPublic)
+@router.get("/id/{user_id}", response_model=UserPublic)
 async def get_user_public(
-    user_uuid: uuid.UUID,
+    user_id: str,
     db: Database = Depends(get_db)
 ):
-    db_user = await crud_user.get_user_by_uuid(db, user_uuid)
+    db_user = await crud_user.get_user_by_id(db, user_id)
     if db_user is None:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND,
                             detail="User not found")
-    output = dict(db_user)
-    if not output['dob_public']:
-        output['dob'] = None
-    if not output['gender_public']:
-        output['gender'] = None
-    if not output['school_public']:
-        output['school'] = None
-    if not output['work_public']:
-        output['work'] = None
-    if not output['location_public']:
-        output['location'] = None
-    return output
+
+    return convert_to_user_info_public(db_user)
+
+
+@router.get("/ids/{user_id_arr}", response_model=List[UserPublic])
+async def get_users_public(
+    user_id_arr: str,
+    db: Database = Depends(get_db)
+):
+    user_id_arr = user_id_arr.split(',')
+    db_user_arr = await crud_user.get_users_by_id(db, user_id_arr)
+    db_user_arr = list(
+        map(lambda x: convert_to_user_info_public(x), db_user_arr)
+    )
+
+    return db_user_arr
 
 
 # TODO: accept other file types
@@ -103,7 +110,8 @@ async def get_user_profile_image_upload_url(
     image_ext: str,
     db: Database = Depends(get_db),
     curr_user: Dict[str, str] = Depends(get_current_user),
-    s3_client: boto3.client = Depends(get_s3_client)
+    s3_client: boto3.client = Depends(get_s3_client),
+    executor: ThreadPoolExecutor = Depends(get_executor)
 ):
     """ Get a presigned url to upload profile image to s3 """
     db_user = await crud_user.get_user_by_id(db, curr_user['user_id'])
@@ -111,16 +119,21 @@ async def get_user_profile_image_upload_url(
         raise HTTPException(status_code=HTTP_404_NOT_FOUND,
                             detail="User not found")
     try:
-        url = s3_client.generate_presigned_url(
-            'put_object',
-            Params={
-                'Bucket': PROFILE_IMAGE_BUCKET_NAME,
-                'Key': f'{db_user["user_uuid"]}/profile_image.{image_ext}',
-                'ACL': 'private',
-                'ContentType': f'image/{image_ext}',
-            },
-            ExpiresIn=60 * 60,
-            HttpMethod='PUT'
+        loop = asyncio.get_running_loop()
+        url = await loop.run_in_executor(
+            executor,
+            functools.partial(
+                s3_client.generate_presigned_url,
+                'put_object',
+                Params={
+                    'Bucket': PROFILE_IMAGE_BUCKET_NAME,
+                    'Key': f'{db_user["user_id"]}/profile_image.{image_ext}',
+                    'ACL': 'private',
+                    'ContentType': f'image/{image_ext}',
+                },
+                ExpiresIn=60 * 60,
+                HttpMethod='PUT'
+            )
         )
     except ClientError as e:
         logging.error(e)
@@ -136,29 +149,78 @@ async def get_user_profile_image_upload_url(
     return url
 
 
-# assumes user_uuid exists
-@router.get("/{user_uuid}/profile-image-url")
+# assumes user_id exists
+@router.get("/id/{user_id}/profile-image-url")
 async def get_user_profile_image_url(
     image_ext: str,
-    user_uuid: uuid.UUID,
-    s3_client: boto3.client = Depends(get_s3_client)
+    user_id: str,
+    s3_client: boto3.client = Depends(get_s3_client),
+    executor: ThreadPoolExecutor = Depends(get_executor)
 ):
     """ Get a presigned url to get the profile image of a user from s3 """
     try:
-        url = s3_client.generate_presigned_url(
-            'get_object',
-            Params={
-                'Bucket': PROFILE_IMAGE_BUCKET_NAME,
-                'Key': f'{user_uuid}/profile_image.{image_ext}'
-            },
-            ExpiresIn=60 * 60,
-            HttpMethod='GET'
+        loop = asyncio.get_running_loop()
+        url = await loop.run_in_executor(
+            executor,
+            functools.partial(
+                s3_client.generate_presigned_url,
+                'get_object',
+                Params={
+                    'Bucket': PROFILE_IMAGE_BUCKET_NAME,
+                    'Key': f'{user_id}/profile_image.{image_ext}'
+                },
+                ExpiresIn=60 * 60,
+                HttpMethod='GET'
+            )
         )
     except ClientError as e:
         logging.error(e)
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=e)
     return url
+
+
+@router.get("/ids/{user_id_arr}/profile-image-url")
+async def get_users_profile_image_url_arr(
+    image_ext_arr: str,
+    user_id_arr: str,
+    s3_client: boto3.client = Depends(get_s3_client),
+    executor: ThreadPoolExecutor = Depends(get_executor)
+):
+    image_ext_arr = image_ext_arr.split(',')
+    user_id_arr = user_id_arr.split(',')
+    if len(image_ext_arr) != len(user_id_arr):
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST,
+                            detail="Invalid parameters and query")
+
+    try:
+        tasks = []
+        loop = asyncio.get_running_loop()
+        for idx in range(len(user_id_arr)):
+            params = {
+                'Bucket': PROFILE_IMAGE_BUCKET_NAME,
+                'Key': f'{user_id_arr[idx]}/profile_image.{image_ext_arr[idx]}'
+            }
+            tasks.append(
+                loop.run_in_executor(
+                    executor,
+                    functools.partial(
+                        s3_client.generate_presigned_url,
+                        'get_object',
+                        Params=params,
+                        ExpiresIn=60 * 60,  # expires in
+                        HttpMethod='GET'
+                    )
+                )
+            )
+        url_arr = await asyncio.gather(*tasks)
+
+    except ClientError as e:
+        logging.error(e)
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=e)
+
+    return url_arr
 
 
 @router.delete("/me/profile-image")
@@ -174,7 +236,7 @@ async def delete_user_profile_image(
     try:
         s3_client.delete_object(
             Bucket=PROFILE_IMAGE_BUCKET_NAME,
-            Key=f'{db_user["user_uuid"]}/profile_image.png'
+            Key=f'{db_user["user_id"]}/profile_image.png'
         )
     except ClientError as e:
         logging.error(e)

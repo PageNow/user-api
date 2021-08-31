@@ -63,6 +63,12 @@ To reset alembic versions, connect to docker postgres, drop all the tables in th
 * http://www.dein.fr/writing-a-subquery-with-sqlalchemy-core.html
 * https://overiq.com/sqlalchemy-101/crud-using-sqlalchemy-core/
 
+### Asyncio
+
+* https://medium.com/@s.zeort/asynchronous-aws-s3-client-in-python-4f6b33829da6
+* https://medium.com/tysonworks/concurrency-with-boto3-41cfa300aab4
+* https://www.trek10.com/blog/aws-lambda-python-asyncio
+
 ## DEBUG NOTES
 
 * sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) could not translate host name "db" to address: Name or service not known

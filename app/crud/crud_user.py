@@ -1,5 +1,4 @@
-import uuid
-from typing import Dict
+from typing import Dict, List
 import datetime
 
 from databases import Database
@@ -22,14 +21,18 @@ async def get_user_by_id(db: Database, user_id: str):
     return user
 
 
-async def get_user_by_uuid(db: Database, user_uuid: uuid.UUID):
-    query = user_table.select().where(user_table.c.user_uuid == user_uuid)
-    user = await db.fetch_one(query)
-    return user
-
-
 async def get_user_by_email(db: Database, email: str):
     pass
+
+
+async def get_users_by_id(db: Database, user_id_arr: List[str]):
+    stmt = (
+        select([text('*')])
+        .select_from(user_table)
+        .where(user_table.c.user_id.in_(tuple(user_id_arr)))
+    )
+    user_arr = await db.fetch_all(stmt)
+    return user_arr
 
 
 async def create_user(

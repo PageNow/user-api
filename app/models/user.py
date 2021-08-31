@@ -1,7 +1,6 @@
 from sqlalchemy import Table, Column, String, Boolean, Date, DateTime, ARRAY
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
-from sqlalchemy.sql.expression import text, false
+from sqlalchemy.sql.expression import false
 
 from app.db.db import metadata
 
@@ -9,10 +8,6 @@ user_table = Table(
     "user_info",
     metadata,
     Column("user_id", String, primary_key=True, index=True),
-    Column(
-        "user_uuid", UUID, nullable=False, unique=True,
-        index=True, server_default=text("uuid_generate_v4()")
-    ),
     Column("email", String, unique=True, nullable=False),
     Column("email_public", Boolean, server_default=false(), nullable=False),
 

@@ -1,5 +1,4 @@
 from typing import List, Optional
-import uuid
 import datetime
 
 from pydantic import BaseModel
@@ -13,7 +12,6 @@ class UserBase(BaseModel):
 
 class UserSummary(UserBase):
     user_id: str
-    user_uuid: uuid.UUID
     description: str
 
     profile_image_uploaded_at: Optional[datetime.datetime] = None
