@@ -42,6 +42,44 @@ $ docker-compose run web alembic upgrade head # migrate
 
 To reset alembic versions, connect to docker postgres, drop all the tables in the datbase.
 
+## Cloud Development
+
+### Uploading Docker Image to ECR
+
+Execute the following commands as instructed [here](https://us-west-2.console.aws.amazon.com/ecr/repositories/private/257206538165/pagenow-user-api?region=us-west-2)
+```shell
+$ aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 257206538165.dkr.ecr.us-west-2.amazonaws.com
+$ docker build -t 257206538165.dkr.ecr.us-west-2.amazonaws.com/pagenow-user-api:latest .
+$ docker push 257206538165.dkr.ecr.us-west-2.amazonaws.com/pagenow-user-api:latest
+```
+
+### Terraform Setup
+
+Set AWS credentials as environment variables
+```shell
+$ export AWS_ACCESS_KEY_ID="YOUR_AWS_ACCESS_KEY_ID"
+$ export AWS_SECRET_ACCESS_KEY="YOUR_AWS_SECRET_ACCESS_KEY"
+$ export AWS_DEFAULT_REGION="us-east-1"
+```
+
+Set RDS password by running
+```shell
+$ export TF_VAR_rds_password=RDS_PASSWORD
+```
+
+Then, update the cloud resources by running
+```shell
+$ terraform plan
+$ terraform apply
+```
+
+### ECS RDS Setup
+
+1. Change the target of the VPC route table 0.0.0.0/0 to Internet Gateway of the VPC.
+2. SSH into EC2 instance.
+3. Run ```docker ps``` to obtain the docker container id.
+4. Run ```docker exec -it DOCKER_CONTAINER_ID python manage.py migrate```
+
 ## TODO
 
 [] Logging errors properly
