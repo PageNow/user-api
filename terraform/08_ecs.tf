@@ -44,6 +44,6 @@ resource "aws_ecs_service" "production" {
     load_balancer {
         target_group_arn = aws_alb_target_group.default-target-group.arn
         container_name   = "pagenow-user-api"
-        container_port   = 8007
+        container_port   = 8000
     }
 }

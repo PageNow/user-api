@@ -7,7 +7,7 @@
 To run the server locally (not through docker), run
 ```shell
 $ export POSTGRES_SERVER=localhost
-$ uvicorn app.main:app --host 0.0.0.0 --port 8007 --reload
+$ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### Run with docker
@@ -79,6 +79,13 @@ $ terraform apply
 2. SSH into EC2 instance.
 3. Run ```docker ps``` to obtain the docker container id.
 4. Run ```docker exec -it DOCKER_CONTAINER_ID python manage.py migrate```
+
+### Update ECS Service after updating Django backend
+
+After building and pushgin Docker image to ECR, change directory to ```deploy/``` and run
+```shell
+$ python update-ecs.py --cluster=user-api-production-cluster --service=user-api-production-service
+```
 
 ## TODO
 

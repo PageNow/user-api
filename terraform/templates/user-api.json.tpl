@@ -8,12 +8,12 @@
         "links": [],
         "portMappings": [
             {
-                "containerPort": 8007,
+                "containerPort": 8000,
                 "hostPort": 0,
                 "protocol": "tcp"
             }
         ],
-        "command": ["uvicorn", "app.main:app", "--port", "8007", "--reload"],
+        "command": ["uvicorn", "app.main:app", "--port", "8000", "--reload"],
         "environment": [
             {
                 "name": "RDS_DB_NAME",
