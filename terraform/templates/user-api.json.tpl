@@ -13,7 +13,7 @@
                 "protocol": "tcp"
             }
         ],
-        "command": ["uvicorn", "app.main:app", "--port", "8000", "--reload"],
+        "command": ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
         "environment": [
             {
                 "name": "RDS_DB_NAME",
