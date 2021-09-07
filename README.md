@@ -6,7 +6,7 @@
 
 To run the server locally (not through docker), run
 ```shell
-$ export POSTGRES_SERVER=localhost
+$ export RDS_HOST=localhost
 $ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
@@ -113,6 +113,11 @@ $ python update-ecs.py --cluster=user-api-production-cluster --service=user-api-
 * https://medium.com/@s.zeort/asynchronous-aws-s3-client-in-python-4f6b33829da6
 * https://medium.com/tysonworks/concurrency-with-boto3-41cfa300aab4
 * https://www.trek10.com/blog/aws-lambda-python-asyncio
+
+### RDS Proxy Terraform
+
+* https://aws.plainenglish.io/have-your-lambda-functions-connect-to-rds-through-rds-proxy-c94072560eee
+
 
 ## DEBUG NOTES
 

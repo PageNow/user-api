@@ -23,7 +23,7 @@ data "template_file" "app" {
         rds_db_name             = var.rds_db_name
         rds_username            = var.rds_username
         rds_password            = var.rds_password
-        rds_hostname            = aws_db_instance.production.address
+        rds_host                = aws_db_instance.production.address
     }
 }
 

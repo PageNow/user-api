@@ -30,6 +30,9 @@ resource "aws_subnet" "private-subnet-2" {
 }
 
 # Define these subnets here since subnets cannot be modified by AWS CDK
+# For VPC Peering, we need to modify the route tables of both VPCs, so
+# put everything in one VPC
+
 # Presence Redis Subnets
 # resource "aws_subnet" "presence-redis-subnet-1" {
 #     cidr_block       = var.presence_redis_subnet_1_cidr

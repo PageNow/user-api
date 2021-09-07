@@ -88,7 +88,7 @@ variable "docker_image_url_pagenow_user_api" {
 }
 variable "app_count" {
     description = "Number of Docker containers to run"
-    default     = 2
+    default     = 1
 }
 # variable "allowed_hosts" {
 #   description = "Domain name for allowed hosts"
@@ -106,7 +106,7 @@ variable "autoscale_max" {
 }
 variable "autoscale_desired" {
     description = "Desired autoscale (number of EC2)"
-    default     = "4"
+    default     = "2"
 }
 
 # RDS

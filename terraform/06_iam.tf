@@ -25,3 +25,19 @@ resource "aws_iam_instance_profile" "ecs" {
     path = "/"
     role = aws_iam_role.ecs-host-role.name
 }
+
+resource "aws_iam_policy" "rds-proxy-role-policy" {
+    name   = "rds_proxy_policy_prod"
+    policy = file("policies/rds-proxy-role-policy.json")
+}
+
+resource "aws_iam_role" "rds-proxy-role" {
+    name               = "rds_proxy_role_prod"
+    assume_role_policy = file("policies/rds-proxy-role.json")
+}
+
+resource "aws_iam_role_policy_attachment" "rds-proxy-attach" {
+    policy_arn = aws_iam_policy.rds-proxy-role-policy.arn
+    role       = aws_iam_role.rds-proxy-role.name
+}
+

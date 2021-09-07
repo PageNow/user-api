@@ -28,8 +28,8 @@
                 "value": "${rds_password}"
             },
             {
-                "name": "RDS_HOSTNAME",
-                "value": "${rds_hostname}"
+                "name": "RDS_HOST",
+                "value": "${rds_host}"
             },
             {
                 "name": "RDS_PORT",

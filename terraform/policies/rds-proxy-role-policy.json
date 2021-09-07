@@ -1,0 +1,22 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowProxyToGetDbCredsFromSecretsManager",
+            "Effect": "Allow",
+            "Action": "secretsmanager:GetSecretValue",
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowProxyToDecryptDbCredsFromSecretsManager",
+            "Effect": "Allow",
+            "Action": "kms:Decrypt",
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "kms:ViaService": "secretsmanager.us-west-2.amazonaws.com"
+                }
+            }
+        }
+    ]
+}

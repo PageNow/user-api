@@ -54,9 +54,9 @@ resource "aws_security_group" "ecs" {
     }
 }
 
-# RDS Security Group (traffic ECS -> RDS)
-resource "aws_security_group" "rds" {
-    name        = "rds-security-group"
+# RDS Security Group (traffic ECS -> RDS Proxy)
+resource "aws_security_group" "rds-proxy" {
+    name        = "rds-proxy-security-group"
     description = "Allows inbound access from ECS only"
     vpc_id      = aws_vpc.production-vpc.id
 
@@ -65,6 +65,27 @@ resource "aws_security_group" "rds" {
         from_port       = "5432"
         to_port         = "5432"
         security_groups = [aws_security_group.ecs.id]
+    }
+
+    egress {
+        protocol    = "-1"
+        from_port   = 0
+        to_port     = 0
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+}
+
+# RDS Security Group (traffic RDS Proxy -> RDS)
+resource "aws_security_group" "rds" {
+    name        = "rds-security-group"
+    description = "Allows inbound access from RDS Proxy only"
+    vpc_id      = aws_vpc.production-vpc.id
+
+    ingress {
+        protocol        = "tcp"
+        from_port       = "5432"
+        to_port         = "5432"
+        security_groups = [aws_security_group.rds-proxy.id]
     }
 
     egress {
