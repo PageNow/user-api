@@ -24,9 +24,10 @@ data "template_file" "app" {
         rds_username            = var.rds_username
         rds_password            = var.rds_password
         rds_port                = var.rds_port
-        rds_host                = aws_rds_cluster.production.endpoint
-        rds_ro_host             = aws_rds_cluster.production.reader_endpoint
-        # rds_host                = aws_db_proxy.production.endpoint
+        # rds_host                = aws_rds_cluster.production.endpoint
+        rds_host                = aws_db_proxy_endpoint.production-rw.endpoint
+        # rds_ro_host             = aws_rds_cluster.production.reader_endpoint
+        rds_ro_host             = aws_db_proxy_endpoint.production-ro.endpoint
     }
 }
 

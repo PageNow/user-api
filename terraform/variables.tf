@@ -110,11 +110,6 @@ variable "autoscale_desired" {
 }
 
 # RDS
-variable "rds_availability_zones" {
-    description = "RDS availability zones"
-    type        = list(string)
-    default     = ["us-west-2a", "us-west-2b", "us-west-3c"]
-}
 variable "rds_engine" {
     description = "RDS engine"
     default     = "aurora-postgresql"
@@ -140,7 +135,7 @@ variable "rds_port" {
 }
 variable "rds_instance_class" {
     description = "RDS instance type"
-    default     = "db.t2.micro"
+    default     = "db.t3.medium"
 }
 
 # Domain

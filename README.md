@@ -82,7 +82,7 @@ $ terraform apply
 
 ### Update ECS Service after updating Django backend
 
-After building and pushgin Docker image to ECR, change directory to ```deploy/``` and run
+After building and pushgin Docker image to ECR, run
 ```shell
 $ python update-ecs.py --cluster=user-api-production-cluster --service=user-api-production-service
 ```

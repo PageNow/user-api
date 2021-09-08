@@ -23,6 +23,10 @@ def get_db(request: Request):
     return request.app.state._db
 
 
+def get_db_ro(request: Request):
+    return request.app.state._db_ro
+
+
 def get_s3_client():
     return s3_client
 

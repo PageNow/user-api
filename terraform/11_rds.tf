@@ -27,7 +27,6 @@ resource "aws_rds_cluster" "production" {
     cluster_identifier      = "${var.ecs_cluster_name}-rds-cluster"
     engine                  = var.rds_engine
     engine_version          = var.rds_engine_version
-    availability_zones      = var.rds_availability_zones
     database_name           = var.rds_db_name
     master_username         = var.rds_username
     master_password         = var.rds_password
