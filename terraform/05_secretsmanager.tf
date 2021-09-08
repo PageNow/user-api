@@ -10,8 +10,8 @@ resource "aws_secretsmanager_secret_version" "rds-secret-version" {
         "username"             = var.rds_username
         "password"             = var.rds_password
         "engine"               = "postgres"
-        "host"                 = aws_db_instance.production.address
-        "port"                 = 5432
-        "dbInstanceIdentifier" = aws_db_instance.production.id
+        "host"                 = aws_rds_cluster.production.endpoint
+        "port"                 = var.rds_port
+        "dbInstanceIdentifier" = aws_rds_cluster.production.id
     })
 }

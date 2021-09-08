@@ -23,7 +23,9 @@ data "template_file" "app" {
         rds_db_name             = var.rds_db_name
         rds_username            = var.rds_username
         rds_password            = var.rds_password
-        rds_host                = aws_db_instance.production.address
+        rds_port                = var.rds_port
+        rds_host                = aws_rds_cluster.production.endpoint
+        rds_ro_host             = aws_rds_cluster.production.reader_endpoint
         # rds_host                = aws_db_proxy.production.endpoint
     }
 }
@@ -31,7 +33,7 @@ data "template_file" "app" {
 resource "aws_ecs_task_definition" "app" {
     family                = "pagenow-user-api"
     container_definitions = data.template_file.app.rendered
-    depends_on            = [aws_db_instance.production]
+    depends_on            = [aws_rds_cluster.production]
 }
 
 resource "aws_ecs_service" "production" {

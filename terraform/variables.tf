@@ -110,6 +110,19 @@ variable "autoscale_desired" {
 }
 
 # RDS
+variable "rds_availability_zones" {
+    description = "RDS availability zones"
+    type        = list(string)
+    default     = ["us-west-2a", "us-west-2b", "us-west-3c"]
+}
+variable "rds_engine" {
+    description = "RDS engine"
+    default     = "aurora-postgresql"
+}
+variable "rds_engine_version" {
+    description = "RDS engine version"
+    default     = "11.12"
+}
 variable "rds_db_name" {
     description = "RDS database name"
     default     = "core_db"
@@ -120,6 +133,10 @@ variable "rds_username" {
 }
 variable "rds_password" {
     description = "RDS database password"
+}
+variable "rds_port" {
+    description = "RDS database connection port"
+    default     = 5432
 }
 variable "rds_instance_class" {
     description = "RDS instance type"

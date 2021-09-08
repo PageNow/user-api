@@ -32,8 +32,12 @@
                 "value": "${rds_host}"
             },
             {
+                "name": "RDS_RO_HOST",
+                "value": "${rds_ro_host}"
+            },
+            {
                 "name": "RDS_PORT",
-                "value": "5432"
+                "value": "${rds_port}"
             }
         ],
         "logConfiguration": {

@@ -117,7 +117,7 @@ $ python update-ecs.py --cluster=user-api-production-cluster --service=user-api-
 ### RDS Proxy Terraform
 
 * https://aws.plainenglish.io/have-your-lambda-functions-connect-to-rds-through-rds-proxy-c94072560eee
-
+* https://www.jbssolutions.com/resources/blog/amazon-rds-proxy-terraform/
 
 ## DEBUG NOTES
 
