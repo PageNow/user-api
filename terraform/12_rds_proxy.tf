@@ -10,7 +10,7 @@ resource "aws_db_proxy" "production" {
 
     auth {
         auth_scheme = "SECRETS"
-        iam_auth    = "REQUIRED"
+        iam_auth    = "DISABLED"
         secret_arn  = aws_secretsmanager_secret.rds-secret.arn
     }
 }

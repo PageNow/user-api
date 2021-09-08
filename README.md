@@ -78,7 +78,7 @@ $ terraform apply
 1. Change the target of the VPC route table 0.0.0.0/0 to Internet Gateway of the VPC.
 2. SSH into EC2 instance.
 3. Run ```docker ps``` to obtain the docker container id.
-4. Run ```docker exec -it DOCKER_CONTAINER_ID python manage.py migrate```
+4. Run ```docker exec -it DOCKER_CONTAINER_ID alembic upgrade head```
 
 ### Update ECS Service after updating Django backend
 
