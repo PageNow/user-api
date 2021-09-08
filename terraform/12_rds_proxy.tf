@@ -29,18 +29,19 @@ resource "aws_db_proxy_target" "production" {
     db_cluster_identifier = aws_rds_cluster.production.id
     db_proxy_name         = aws_db_proxy.production.name
     target_group_name     = aws_db_proxy_default_target_group.production.name
+    depends_on            = [aws_rds_cluster_instance.production]
 }
 
 resource "aws_db_proxy_endpoint" "production-ro" {
-  db_proxy_name          = aws_db_proxy.production.name
-  db_proxy_endpoint_name = "${var.ecs_cluster_name}-rds-proxy-endpoint-ro"
-  vpc_subnet_ids         = [aws_subnet.private-subnet-1.id, aws_subnet.private-subnet-2.id]
-  target_role            = "READ_ONLY"
+    db_proxy_name          = aws_db_proxy.production.name
+    db_proxy_endpoint_name = "${var.ecs_cluster_name}-rds-proxy-endpoint-ro"
+    vpc_subnet_ids         = [aws_subnet.private-subnet-1.id, aws_subnet.private-subnet-2.id]
+    target_role            = "READ_ONLY"
 }
 
 resource "aws_db_proxy_endpoint" "production-rw" {
-  db_proxy_name          = aws_db_proxy.production.name
-  db_proxy_endpoint_name = "${var.ecs_cluster_name}-rds-proxy-endpoint-rw"
-  vpc_subnet_ids         = [aws_subnet.private-subnet-1.id, aws_subnet.private-subnet-2.id]
-  target_role            = "READ_WRITE"
+    db_proxy_name          = aws_db_proxy.production.name
+    db_proxy_endpoint_name = "${var.ecs_cluster_name}-rds-proxy-endpoint-rw"
+    vpc_subnet_ids         = [aws_subnet.private-subnet-1.id, aws_subnet.private-subnet-2.id]
+    target_role            = "READ_WRITE"
 }

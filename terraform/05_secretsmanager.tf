@@ -12,6 +12,6 @@ resource "aws_secretsmanager_secret_version" "rds-secret-version" {
         "engine"               = "postgres"
         "host"                 = aws_rds_cluster.production.endpoint
         "port"                 = var.rds_port
-        "dbInstanceIdentifier" = aws_rds_cluster.production.id
+        "dbClusterIdentifier"  = aws_rds_cluster.production.id
     })
 }
