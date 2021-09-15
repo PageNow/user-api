@@ -29,46 +29,6 @@ resource "aws_subnet" "private-subnet-2" {
     availability_zone = var.availability_zones[1]
 }
 
-# Define these subnets here since subnets cannot be modified by AWS CDK
-# For VPC Peering, we need to modify the route tables of both VPCs, so
-# put everything in one VPC
-
-# Presence Redis Subnets
-# resource "aws_subnet" "presence-redis-subnet-1" {
-#     cidr_block       = var.presence_redis_subnet_1_cidr
-#     vpc_id            = aws_vpc.production-vpc.id
-#     availability_zone = var.availability_zones[0]
-#     tags = {
-#         Name = var.presence_redis_subnet_name
-#     }
-# }
-# resource "aws_subnet" "presence-redis-subnet-2" {
-#     cidr_block       = var.presence_redis_subnet_2_cidr
-#     vpc_id            = aws_vpc.production-vpc.id
-#     availability_zone = var.availability_zones[0]
-#     tags = {
-#         Name = var.presence_redis_subnet_name
-#     }
-# }
-
-# # Presence Lambda Subnets
-# resource "aws_subnet" "presence-lambda-subnet-1" {
-#     cidr_block       = var.presence_lambda_subnet_1_cidr
-#     vpc_id            = aws_vpc.production-vpc.id
-#     availability_zone = var.availability_zones[0]
-#     tags = {
-#         Name = var.presence_lambda_subnet_name
-#     }
-# }
-# resource "aws_subnet" "presence-lambda-subnet-2" {
-#     cidr_block       = var.presence_lambda_subnet_2_cidr
-#     vpc_id            = aws_vpc.production-vpc.id
-#     availability_zone = var.availability_zones[0]
-#     tags = {
-#         Name = var.presence_lambda_subnet_name
-#     }
-# }
-
 # Route tables for the subnets
 resource "aws_route_table" "public-route-table" {
     vpc_id = aws_vpc.production-vpc.id
@@ -98,7 +58,7 @@ resource "aws_route_table_association" "private-route-2-association" {
 # Elastic IP
 resource "aws_eip" "elastic-ip-for-nat-gw" {
     vpc                       = true
-    associate_with_private_ip = "10.0.0.5"
+    associate_with_private_ip = "10.0.0.11"
     depends_on                = [aws_internet_gateway.production-igw]
 }
 

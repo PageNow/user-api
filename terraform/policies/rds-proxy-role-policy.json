@@ -4,7 +4,12 @@
         {
             "Sid": "AllowProxyToGetDbCredsFromSecretsManager",
             "Effect": "Allow",
-            "Action": "secretsmanager:GetSecretValue",
+            "Action": [
+                "secretsmanager:GetResourcePolicy",
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+                "secretsmanager:ListSecretVersionIds"
+            ],
             "Resource": "*"
         },
         {

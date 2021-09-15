@@ -4,9 +4,9 @@ from sqlalchemy.sql import func
 from app.db.db import metadata
 
 user_url_history_table = Table(
-    'user_url_history',
+    'user_url_history_table',
     metadata,
-    Column('user_id', String, ForeignKey("user_info.user_id"),
+    Column('user_id', String, ForeignKey("user_table.user_id"),
            primary_key=True, index=True),
     Column('url', String, primary_key=True),
     Column(

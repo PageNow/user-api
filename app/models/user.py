@@ -5,7 +5,7 @@ from sqlalchemy.sql.expression import false
 from app.db.db import metadata
 
 user_table = Table(
-    "user_info",
+    "user_table",
     metadata,
     Column("user_id", String, primary_key=True, index=True),
     Column("email", String, unique=True, nullable=False),

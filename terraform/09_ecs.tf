@@ -18,15 +18,14 @@ data "template_file" "app" {
 
     vars = {
         docker_image_url_pagenow_user_api = var.docker_image_url_pagenow_user_api
-        # docker_image_url_nginx  = var.docker_image_url_nginx
         region                  = var.region
         rds_db_name             = var.rds_db_name
         rds_username            = var.rds_username
         rds_password            = var.rds_password
         rds_port                = var.rds_port
-        rds_host                = aws_rds_cluster.production.endpoint
+        rds_host                = aws_db_proxy.production.endpoint
         # rds_host                = aws_db_proxy_endpoint.production-rw.endpoint
-        rds_ro_host             = aws_rds_cluster.production.reader_endpoint
+        # rds_ro_host             = aws_rds_cluster.production.reader_endpoint
         # rds_ro_host             = aws_db_proxy_endpoint.production-ro.endpoint
     }
 }
@@ -34,7 +33,7 @@ data "template_file" "app" {
 resource "aws_ecs_task_definition" "app" {
     family                = "pagenow-user-api"
     container_definitions = data.template_file.app.rendered
-    depends_on            = [aws_rds_cluster.production]
+    depends_on            = [aws_rds_cluster.production, aws_db_proxy.production]
 }
 
 resource "aws_ecs_service" "production" {
@@ -43,7 +42,7 @@ resource "aws_ecs_service" "production" {
     task_definition = aws_ecs_task_definition.app.arn
     iam_role        = aws_iam_role.ecs-service-role.arn
     desired_count   = var.app_count
-    depends_on      = [aws_alb_listener.ecs-alb-http-listener, aws_iam_role_policy.ecs-service-role-policy]
+    depends_on      = [aws_alb_listener.ecs-alb-http-listener, aws_iam_role_policy.ecs-service-role-policy, aws_db_proxy.production]
 
     load_balancer {
         target_group_arn = aws_alb_target_group.default-target-group.arn

@@ -32,10 +32,6 @@
                 "value": "${rds_host}"
             },
             {
-                "name": "RDS_RO_HOST",
-                "value": "${rds_ro_host}"
-            },
-            {
                 "name": "RDS_PORT",
                 "value": "${rds_port}"
             }
