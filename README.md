@@ -73,6 +73,8 @@ $ terraform plan
 $ terraform apply
 ```
 
+Set up API Gateway following instructions at https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-create-api-as-simple-proxy-for-http.html where endpoint url is 'http://${alb_dns}/{proxy}' and deploy.
+
 ### ECS RDS Setup
 
 1. Change the target of the VPC route table 0.0.0.0/0 to Internet Gateway of the VPC.
