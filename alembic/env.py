@@ -13,7 +13,6 @@ sys.path.append(BASE_DIR)
 
 # need to import models for alembic to include in its commit
 import app.models.user
-import app.models.user_url_history
 import app.models.friendship
 
 from app.core.config import DATABASE_URL

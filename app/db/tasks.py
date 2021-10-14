@@ -1,13 +1,17 @@
 from fastapi import FastAPI
 from databases import Database
 
-from app.core.config import DATABASE_URL
+from app.core.config import DATABASE_URL, POSTGRES_SERVER
 from app.core.logger import logging
 
 
 async def connect_to_db(app: FastAPI) -> None:
     logging.info(f'Connecting to database: {DATABASE_URL}')
-    database = Database(DATABASE_URL, min_size=2, max_size=10, ssl=True)
+    if POSTGRES_SERVER == 'localhost':
+        is_ssl = False
+    else:
+        is_ssl = True
+    database = Database(DATABASE_URL, min_size=2, max_size=10, ssl=is_ssl)
 
     try:
         await database.connect()

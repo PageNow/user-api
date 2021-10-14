@@ -103,6 +103,28 @@ async def update_profile_upload_time(
     return error
 
 
+async def delete_profile_image_info(
+    db: Database,
+    user_id: str
+):
+    user_dict = {
+        "profile_image_uploaded_at": None,
+        "profile_image_extension": None
+    }
+    query = (
+        user_table.update()
+        .where(user_table.c.user_id == user_id)
+        .values(**user_dict)
+    )
+    error = None
+    try:
+        await db.execute(query)
+    except Exception as e:
+        print(e)
+        error = e
+    return error
+
+
 # functions related to searching users from all users
 
 # TODO: add limit, fetch public information only

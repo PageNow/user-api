@@ -127,3 +127,7 @@ $ python update-ecs.py --cluster=user-api-production-cluster --service=user-api-
 
 - Postgres container exited with error message ```PostgreSQL Database directory appears to contain a database; Skipping initialization```
 - Ran ```docker-compose down --volumes```
+
+## Notes
+
+* Setting up CORS is not supported (to be more accurate, unnecessarily complicated) compared to the one click if you do it at console. Also, redirecting ANY method's url path parameter to integration path paramter is not supported by Terraform. So, I left that part to be done at console.

@@ -214,13 +214,16 @@ async def get_users_profile_image_url_arr(
                 )
             )
         url_arr = await asyncio.gather(*tasks)
+        url_dict = dict()
+        for idx in range(len(user_id_arr)):
+            url_dict[user_id_arr[idx]] = url_arr[idx]
 
     except ClientError as e:
         logging.error(e)
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=e)
 
-    return url_arr
+    return url_dict
 
 
 @router.delete("/me/profile-image")
@@ -233,13 +236,21 @@ async def delete_user_profile_image(
     if db_user is None:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND,
                             detail="User not found")
+    error = None
     try:
         s3_client.delete_object(
             Bucket=PROFILE_IMAGE_BUCKET_NAME,
             Key=f'{db_user["user_id"]}/profile_image.png'
         )
+        error = await crud_user.delete_profile_image_info(
+            db, curr_user['user_id'])
     except ClientError as e:
         logging.error(e)
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=e)
+
+    if error is not None:
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=error)
+
     return {'success': True}

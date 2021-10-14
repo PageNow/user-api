@@ -21,7 +21,9 @@ user_table = Table(
     Column("created_at", DateTime, server_default=func.now(), nullable=False),
 
     # share mode is either 'default_all' or 'default_none'
-    Column("share_mode", String, server_default="default_all", nullable=False),
+    Column(
+        "share_mode", String, server_default="default_none", nullable=False
+    ),
     Column(
         "domain_allow_array", ARRAY(String),
         server_default="{}", nullable=False
