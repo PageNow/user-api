@@ -6,7 +6,6 @@ from pydantic import BaseModel
 
 class UserBase(BaseModel):
     first_name: str
-    middle_name: str
     last_name: str
 
 

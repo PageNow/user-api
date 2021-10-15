@@ -12,7 +12,6 @@ user_table = Table(
     Column("email_public", Boolean, server_default=false(), nullable=False),
 
     Column("first_name", String, nullable=False),
-    Column("middle_name", String, nullable=False),
     Column("last_name", String, nullable=False),
 
     Column("dob", Date, nullable=False),
