@@ -18,7 +18,6 @@ router = APIRouter()
 @router.get("/email/{email}", response_model=List[UserSummary])
 async def search_users_by_email(
     email: str,
-    exact: bool = False,
     limit: int = 10,
     offset: int = 0,
     db: Database = Depends(get_db),
@@ -29,8 +28,8 @@ async def search_users_by_email(
     if limit == 0:
         return []
 
-    res = await crud_user.search_user_by_email(
-        db, email, exact, limit, offset=offset)
+    res = await crud_user.search_user(
+        db, 'email', email, limit=limit, offset=offset)
     if res['error'] is not None:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Sorry, something went wrong")
@@ -41,7 +40,6 @@ async def search_users_by_email(
 @router.get("/name/{name}", response_model=List[UserSummary])
 async def search_users_by_name(
     name: str,
-    exact: bool = False,
     limit: int = 10,
     offset: int = 0,
     db: Database = Depends(get_db),
@@ -52,8 +50,8 @@ async def search_users_by_name(
     if limit == 0:
         return []
 
-    res = await crud_user.search_user_by_name(
-        db, name, exact, limit, offset=offset)
+    res = await crud_user.search_user(
+        db, 'name', name, limit=limit, offset=offset)
     if res['error'] is not None:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Sorry, something went wrong")

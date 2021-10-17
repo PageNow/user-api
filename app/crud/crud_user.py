@@ -2,7 +2,7 @@ from typing import Dict, List
 import datetime
 
 from databases import Database
-from sqlalchemy import select, text, case, union, Integer
+from sqlalchemy import select, text, case, union, func, Integer, String
 from sqlalchemy.sql.functions import coalesce, max as max_
 from sqlalchemy.sql.expression import literal, cast
 
@@ -131,70 +131,128 @@ async def delete_profile_image_info(
 # functions related to searching users from all users
 
 # TODO: add limit, fetch public information only
-async def search_user_with_email(
+async def search_user(
     db: Database,
     # curr_user: Dict[str, str],
-    email: str,
-    limit: int,
+    search_option: str,  # email or name
+    search_filter: str,
+    limit: int = None,
     offset: int = 0
 ):
-    limit = min(SEARCH_MAX_LIMIT, limit)
+    assert search_option in ('email', 'name')
+
     # user_id = curr_user["user_id"]
     user_id = '543449a2-9225-479e-bf0c-c50da6b16b7c'
 
-    # get friends of user_id (user_id, accepted_state)
-    friends1 = (
+    search_filter = search_filter.lower()
+    if limit is not None:
+        limit = min(SEARCH_MAX_LIMIT, limit)
+
+    # get friends of user_id (user_id, friendship_state)
+    user_friends1 = (
         select([
             friendship_table.c.user_id2.label("user_id"),
             case(
                 [(friendship_table.c.accepted_at.isnot(None),
                   cast(literal(2), Integer))],
                 else_=cast(literal(1), Integer)
-            ).label("accepted_state")
+            ).label("friendship_state")
         ])
         .select_from(friendship_table)
         .where(friendship_table.c.user_id1 == user_id)
     )
-    friends2 = (
+    user_friends2 = (
         select([
             friendship_table.c.user_id1.label("user_id"),
             case(
                 [(friendship_table.c.accepted_at.isnot(None),
                   cast(literal(2), Integer))],
                 else_=cast(literal(1), Integer)
-            ).label("accepted_state")
+            ).label("friendship_state")
         ])
         .select_from(friendship_table)
         .where(friendship_table.c.user_id2 == user_id)
     )
-    friends = friends1.union_all(friends2).alias('friends')
+    user_friends = (
+        union(user_friends1, user_friends2).cte().alias('user_firends')
+    )
+
+    # get accepted friends of user_id (user_id)
+    user_friends_accepted = (
+        select([user_friends.c.user_id])
+        .select_from(user_friends)
+        .where(user_friends.c.friendship_state == 2)
+    ).cte().alias('user_friends_accepted')
+
+    # get all friendships that are accepted (user_id1, user_id2)
+    friends = (
+        select([friendship_table.c.user_id1, friendship_table.c.user_id2])
+        .select_from(friendship_table)
+        .where(friendship_table.c.accepted_at.isnot(None))
+    ).cte().alias('friends')
 
     # get user_ids filtered using email
     # match score 3 - match from start, 2 - match from end, 1 - match in middle
-    user_id_filtered3 = (
-        select([
-            user_table.c.user_id,
-            cast(literal(3), Integer).label("match_score")
-        ])
-        .select_from(user_table)
-        .where(user_table.c.email.like(f'{email}%'))
-    )
-    user_id_filtered2 = (
-        select([
-            user_table.c.user_id,
-            cast(literal(2), Integer).label("match_score")
-        ])
-        .select_from(user_table)
-        .where(user_table.c.email.like(f'%{email}'))
-    )
-    user_id_filtered1 = (
-        select([
-            user_table.c.user_id,
-            cast(literal(1), Integer).label("match_score")
-        ])
-        .select_from(user_table)
-        .where(user_table.c.email.like(f'%{email}%'))
-    )
+    if search_option == 'email':
+        user_id_filtered3 = (
+            select([
+                user_table.c.user_id,
+                cast(literal(3), Integer).label("match_score")
+            ])
+            .select_from(user_table)
+            .where(func.lower(user_table.c.email).like(f'{search_filter}%'))
+        )
+        user_id_filtered2 = (
+            select([
+                user_table.c.user_id,
+                cast(literal(2), Integer).label("match_score")
+            ])
+            .select_from(user_table)
+            .where(func.lower(user_table.c.email).like(f'%{search_filter}'))
+        )
+        user_id_filtered1 = (
+            select([
+                user_table.c.user_id,
+                cast(literal(1), Integer).label("match_score")
+            ])
+            .select_from(user_table)
+            .where(func.lower(user_table.c.email).like(f'%{search_filter}%'))
+        )
+    elif search_option == 'name':
+        user_id_filtered3 = (
+            select([
+                user_table.c.user_id,
+                cast(literal(3), Integer).label("match_score")
+            ])
+            .select_from(user_table)
+            .where(func.lower(func.concat(
+                user_table.c.first_name, cast(literal(' '), String),
+                user_table.c.last_name)
+            ).like(f'{search_filter}%'))
+        )
+        user_id_filtered2 = (
+            select([
+                user_table.c.user_id,
+                cast(literal(2), Integer).label("match_score")
+            ])
+            .select_from(user_table)
+            .where(func.lower(func.concat(
+                user_table.c.first_name, cast(literal(' '), String),
+                user_table.c.last_name)
+            ).like(f'%{search_filter}'))
+        )
+        user_id_filtered1 = (
+            select([
+                user_table.c.user_id,
+                cast(literal(1), Integer).label("match_score")
+            ])
+            .select_from(user_table)
+            .where(func.lower(func.concat(
+                user_table.c.first_name, cast(literal(' '), String),
+                user_table.c.last_name)
+            ).like(f'%{search_filter}%'))
+        )
+
     user_id_filtered321 = union(user_id_filtered3, user_id_filtered2,
                                 user_id_filtered1).alias('user_id_filtered321')
     user_id_filtered = (
@@ -203,83 +261,124 @@ async def search_user_with_email(
             max_(user_id_filtered321.c.match_score).label("match_score")
         ])
         .select_from(user_id_filtered321)
+        .where(user_id_filtered321.c.user_id != user_id)
         .group_by(user_id_filtered321.c.user_id)
-    ).alias("user_id_filtered")
+    ).cte().alias("user_id_filtered")
 
-    # actual query
-    query_table = (
+    # search_result - all fields based on query conditions
+    # (used as basis of later queries)
+    search_result = (
         select([
             user_table.c.user_id, user_table.c.first_name,
             user_table.c.last_name, user_table.c.description,
             user_table.c.profile_image_extension,
-            friends.c.accepted_state, user_id_filtered.c.match_score
+            coalesce(user_friends.c.friendship_state, 0).label(
+                'friendship_state'),
+            user_id_filtered.c.match_score
         ])
         .select_from(
             user_table.join(
                 user_id_filtered,
                 user_table.c.user_id == user_id_filtered.c.user_id,
             ).join(
-                friends,
-                user_table.c.user_id == friends.c.user_id,
+                user_friends,
+                user_table.c.user_id == user_friends.c.user_id,
                 isouter=True,
                 full=True
             )
         )
         .where(user_table.c.user_id.isnot(None))
-    ).alias('query_table')
+    ).cte().alias('search_result')
 
-    # get user_id
+    # search_result joined with friends of each user
+    # joined on user_id1
+    search_result_friends1 = (
+        select([
+            search_result.c.user_id, search_result.c.first_name,
+            search_result.c.last_name, search_result.c.description,
+            search_result.c.profile_image_extension,
+            search_result.c.friendship_state, search_result.c.match_score,
+            friends.c.user_id2.label('friend_id')
+        ])
+        .select_from(
+            search_result.join(
+                friends, search_result.c.user_id == friends.c.user_id1,
+                isouter=True, full=True
+            )
+        )
+        .where(search_result.c.user_id.isnot(None))
+    )
+    # joined on user_id2
+    search_result_friends2 = (
+        select([
+            search_result.c.user_id, search_result.c.first_name,
+            search_result.c.last_name, search_result.c.description,
+            search_result.c.profile_image_extension,
+            search_result.c.friendship_state, search_result.c.match_score,
+            friends.c.user_id1.label('friend_id')
+        ])
+        .select_from(
+            search_result.join(
+                friends, search_result.c.user_id == friends.c.user_id2,
+                isouter=True, full=True
+            )
+        )
+        .where(search_result.c.user_id.isnot(None))
+    )
+    # union of tow partial tables
+    search_result_friends = (
+        union(search_result_friends1, search_result_friends2)
+    ).cte().alias('search_result_friends')
+
+    # add a column of number of mutual friends to search_result_with_friends
+    search_result_mutual_friends = (
+        select([
+            search_result_friends.c.user_id,
+            func.count(search_result_friends.c.friend_id)
+                .label('mutual_friend_count')
+        ])
+        .select_from(
+            search_result_friends.join(
+                user_friends_accepted,
+                search_result_friends.c.friend_id
+                == user_friends_accepted.c.user_id
+            )
+        )
+        .group_by(search_result_friends.c.user_id)
+    ).cte().alias('search_result_mutual_friends')
+
     query = (
         select([
-            query_table.c.user_id, query_table.c.first_name,
-            query_table.c.last_name, query_table.c.description,
-            query_table.c.profile_image_extension,
-            coalesce(query_table.c.accepted_state, 0).label("accepted_state"),
-            query_table.c.match_score
+            search_result.c.user_id, search_result.c.first_name,
+            search_result.c.last_name, search_result.c.description,
+            search_result.c.profile_image_extension,
+            search_result.c.friendship_state,
+            search_result.c.match_score,
+            coalesce(
+                search_result_mutual_friends.c.mutual_friend_count, 0
+            ).label('mutual_friend_count')
         ])
-        .select_from(query_table)
-        .order_by(query_table.c.accepted_state.desc().nullslast())
-        .order_by(query_table.c.match_score.desc())
-        .order_by(query_table.c.user_id.desc())
+        .select_from(
+            search_result.join(
+                search_result_mutual_friends,
+                search_result.c.user_id
+                == search_result_mutual_friends.c.user_id,
+                isouter=True, full=True
+            )
+        )
+        .order_by(search_result.c.friendship_state.desc().nullslast())
+        .order_by(search_result_mutual_friends.c.mutual_friend_count.desc()
+                  .nullslast())
+        .order_by(search_result.c.match_score.desc().nullslast())
+        .order_by(search_result.c.user_id.desc().nullslast())
         .offset(offset)
-        .limit(limit)
     )
+    if limit is not None:
+        query = query.limit(limit)
+
     users, error = None, None
     try:
         users = await db.fetch_all(query)
-    except Exception as e:
-        logging.error(e)
-        error = e
-    return {'users': users, 'error': error}
-
-
-async def search_user_by_name(
-    db: Database,
-    curr_user: Dict[str, str],
-    name: str,
-    exact: bool,
-    limit: int,
-    offset: int = 0
-):
-    limit = min(SEARCH_MAX_LIMIT, limit)
-    if exact:
-        stmt = (
-            select([text('*')])
-            .where(user_table.c.name == name)
-            .limit(limit)
-            .offset(offset)
-        )
-    else:
-        stmt = (
-            select([text('*')])
-            .where(user_table.c.name.like(f'%{name}%'))
-            .limit(limit)
-            .offset(offset)
-        )
-
-    users, error = None, None
-    try:
-        users = await db.fetch_all(stmt)
     except Exception as e:
         logging.error(e)
         error = e

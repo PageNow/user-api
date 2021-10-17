@@ -220,3 +220,13 @@ async def search_friends_by_name(
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail='Sorry, something went wrong')
     return res['friends']
+
+
+# get all friends of the user
+@router.get("/all")
+async def get_all_friends(
+    db: Database = Depends(get_db)
+):
+    res = await crud_friendship.get_all_friends(
+        db, '543449a2-9225-479e-bf0c-c50da6b16b7c')
+    return res

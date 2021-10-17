@@ -16,6 +16,9 @@ class UserSummary(UserBase):
     profile_image_uploaded_at: Optional[datetime.datetime] = None
     profile_image_extension: Optional[str] = None
 
+    friendship_state: int
+    mutual_friend_count: int
+
 
 class UserPublic(UserSummary):
     dob: Optional[datetime.date] = None

@@ -1,6 +1,7 @@
 import datetime
 
 from sqlalchemy import select
+from sqlalchemy.sql.functions import coalesce
 from databases import Database
 
 from app.models.friendship import friendship_table
@@ -124,8 +125,7 @@ async def get_all_friendship_request_users(db: Database, curr_user_id: str):
     ).alias('friendship_table_filtered')
     query = (
         select([
-            user_table.c.user_id,
-            user_table.c.first_name, user_table.c.middle_name,
+            user_table.c.user_id, user_table.c.first_name,
             user_table.c.last_name, user_table.c.description,
             user_table.c.profile_image_uploaded_at,
             user_table.c.profile_image_extension
@@ -167,15 +167,34 @@ async def delete_friendship(
 
 # functions related to getting friends (used for search, etc.)
 async def get_all_friends(db: Database, user_id: str):
-    query = (
-        friendship_table.select()
-        .where(((friendship_table.c.user_id1 == user_id) |
-               (friendship_table.c.user_id2 == user_id)) &
-               (friendship_table.c.accepted_at is not None))
+    friends1 = (
+        select([
+            friendship_table.c.user_id2.label("user_id"),
+            coalesce(
+                friendship_table.c.accepted_at,
+                datetime.datetime.utcfromtimestamp(0)
+            ).label("accepted_at")
+        ])
+        .select_from(friendship_table)
+        .where(friendship_table.c.user_id1 == user_id)
     )
+    friends2 = (
+        select([
+            friendship_table.c.user_id1.label("user_id"),
+            coalesce(
+                friendship_table.c.accepted_at,
+                datetime.datetime.utcfromtimestamp(0)
+            ).label("accepted_at")
+        ])
+        .select_from(friendship_table)
+        .where(friendship_table.c.user_id2 == user_id)
+    )
+    query = friends1.union_all(friends2)
+
     friends, error = None, None
     try:
-        friends = await db.execute(query)
+        friends = await db.fetch_all(query)
+        print(friends)
     except Exception as e:
         logging.error(e)
         error = e
@@ -227,8 +246,7 @@ async def get_friends_by_email(
     # join friendship_table user_id2 == user_table.user_id
     stmt_user_id1 = (
         select([
-            user_email_table.c.user_id,
-            user_email_table.c.first_name, user_email_table.c.middle_name,
+            user_email_table.c.user_id, user_email_table.c.first_name,
             user_email_table.c.last_name, user_email_table.c.description,
             user_email_table.c.profile_image_uploaded_at,
             user_email_table.c.profile_image_extension
@@ -246,8 +264,7 @@ async def get_friends_by_email(
     # join friendship_table user_id1 == user_table.user_id
     stmt_user_id2 = (
         select([
-            user_email_table.c.user_id,
-            user_email_table.c.first_name, user_email_table.c.middle_name,
+            user_email_table.c.user_id, user_email_table.c.first_name,
             user_email_table.c.last_name, user_email_table.c.description,
             user_email_table.c.profile_image_uploaded_at,
             user_email_table.c.profile_image_extension
