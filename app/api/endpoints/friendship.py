@@ -1,5 +1,4 @@
 from typing import Dict, List
-import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from starlette.config import Config
@@ -11,7 +10,7 @@ from databases import Database
 from app.crud import crud_friendship, crud_user
 from app.schemas.friendship import FriendshipRequest, FriendshipAccept, \
     FriendshipDelete
-from app.schemas.user import UserSummary
+from app.schemas.user import UserFriendRequest, UserSummary
 from app.api.deps import get_db
 from app.api.auth.auth import get_current_user
 
@@ -37,7 +36,7 @@ async def check_friendship(
     return res['request']
 
 
-@router.post("/request")
+@router.post("/requests")
 async def create_friendship_request(
     friendship_request: FriendshipRequest,
     db: Database = Depends(get_db),
@@ -64,7 +63,7 @@ async def create_friendship_request(
     return {'success': True}
 
 
-@router.get("/request/{user_id}")
+@router.get("/requests/{user_id}")
 async def get_friendship_info(
     user_id: str,
     db: Database = Depends(get_db),
@@ -83,19 +82,17 @@ async def get_friendship_info(
 
 # get userInfo of users who sent friendship requests that the current user
 # has not accepted yet
-@router.get("/requests", response_model=List[UserSummary])
+@router.get("/requests", response_model=List[UserFriendRequest])
 async def get_friendship_requests(
     db: Database = Depends(get_db),
     curr_user: Dict[str, str] = Depends(get_current_user)
 ):
-    print(curr_user)
-    res = await crud_friendship.get_all_friendship_request_users(
+    res = await crud_friendship.get_all_friendship_requests(
         db, curr_user['user_id']
     )
     if res['error'] is not None:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Sorry, something went wrong")
-    logging.info(res)
     return res['users']
 
 
@@ -127,7 +124,7 @@ async def delete_friendship(
     return {'success': True}
 
 
-@router.delete("/request/{user_id}")
+@router.delete("/requests/{user_id}")
 async def delete_friendship_request(
     user_id: str,
     db: Database = Depends(get_db),
@@ -225,8 +222,9 @@ async def search_friends_by_name(
 # get all friends of the user
 @router.get("/all")
 async def get_all_friends(
-    db: Database = Depends(get_db)
+    db: Database = Depends(get_db),
+    curr_user: Dict[str, str] = Depends(get_current_user)
 ):
     res = await crud_friendship.get_all_friends(
-        db, '543449a2-9225-479e-bf0c-c50da6b16b7c')
+        db, curr_user['user_id'])
     return res

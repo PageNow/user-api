@@ -1,4 +1,5 @@
-from typing import List
+from app.api.auth.auth import get_current_user
+from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException
 from starlette.config import Config
@@ -18,9 +19,10 @@ router = APIRouter()
 @router.get("/email/{email}", response_model=List[UserSummary])
 async def search_users_by_email(
     email: str,
-    limit: int = 10,
+    limit: int = 15,
     offset: int = 0,
     db: Database = Depends(get_db),
+    curr_user: Dict[str, str] = Depends(get_current_user)
 ):
     if limit < 0 or offset < 0:
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST,
@@ -28,21 +30,23 @@ async def search_users_by_email(
     if limit == 0:
         return []
 
+    email = email.strip('\\')
+
     res = await crud_user.search_user(
-        db, 'email', email, limit=limit, offset=offset)
+        db, curr_user, 'email', email, limit=limit, offset=offset)
     if res['error'] is not None:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Sorry, something went wrong")
-    print(res)
     return res['users']
 
 
 @router.get("/name/{name}", response_model=List[UserSummary])
 async def search_users_by_name(
     name: str,
-    limit: int = 10,
+    limit: int = 15,
     offset: int = 0,
     db: Database = Depends(get_db),
+    curr_user: Dict[str, str] = Depends(get_current_user),
 ):
     if limit < 0 or offset < 0:
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST,
@@ -50,8 +54,10 @@ async def search_users_by_name(
     if limit == 0:
         return []
 
+    name = name.strip('\\')
+
     res = await crud_user.search_user(
-        db, 'name', name, limit=limit, offset=offset)
+        db, curr_user, 'name', name, limit=limit, offset=offset)
     if res['error'] is not None:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Sorry, something went wrong")

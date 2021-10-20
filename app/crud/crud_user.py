@@ -128,25 +128,108 @@ async def delete_profile_image_info(
     return error
 
 
-# functions related to searching users from all users
+# get mutual friends between current user and input user
+async def get_mutual_friends(
+    db: Database,
+    curr_user: Dict[str, str],
+    user_id: str,
+    limit: int = SEARCH_MAX_LIMIT,
+    offset: int = 0
+):
+    curr_user_id = curr_user["user_id"]
+    limit = min(SEARCH_MAX_LIMIT, limit)
+    curr_user_friends1 = (
+        select([
+            friendship_table.c.user_id1.label('friend_id')
+        ])
+        .select_from(friendship_table)
+        .where((friendship_table.c.user_id2 == curr_user_id)
+               & friendship_table.c.accepted_at.isnot(None))
+    )
+    curr_user_friends2 = (
+        select([
+            friendship_table.c.user_id2.label('friend_id')
+        ])
+        .select_from(friendship_table)
+        .where((friendship_table.c.user_id1 == curr_user_id)
+               & friendship_table.c.accepted_at.isnot(None))
+    )
+    curr_user_friends = union(
+        curr_user_friends1, curr_user_friends2
+    ).cte().alias('curr_user_friends')
 
-# TODO: add limit, fetch public information only
+    user_friends1 = (
+        select([
+            friendship_table.c.user_id1.label('friend_id')
+        ])
+        .select_from(friendship_table)
+        .where((friendship_table.c.user_id2 == user_id)
+               & friendship_table.c.accepted_at.isnot(None))
+    )
+    user_friends2 = (
+        select([
+            friendship_table.c.user_id2.label('friend_id')
+        ])
+        .select_from(friendship_table)
+        .where((friendship_table.c.user_id1 == user_id)
+               & friendship_table.c.accepted_at.isnot(None))
+    )
+    user_friends = union(
+        user_friends1, user_friends2
+    ).cte().alias('user_friends')
+
+    mutual_friends = (
+        select([curr_user_friends.c.friend_id.label('user_id')])
+        .select_from(
+            curr_user_friends.join(
+                user_friends,
+                curr_user_friends.c.friend_id == user_friends.c.friend_id
+            )
+        )
+    ).cte().alias('mutual_friends')
+
+    query = (
+        select([
+            user_table.c.user_id, user_table.c.first_name,
+            user_table.c.last_name, user_table.c.description,
+            user_table.c.profile_image_extension
+        ])
+        .select_from(
+            user_table.join(
+                mutual_friends,
+                user_table.c.user_id == mutual_friends.c.user_id
+            )
+        )
+        .order_by(user_table.c.first_name.asc())
+        .order_by(user_table.c.last_name.asc())
+        .limit(limit)
+        .offset(offset)
+    )
+
+    users, error = None, None
+    try:
+        users = await db.fetch_all(query)
+    except Exception as e:
+        logging.error(e)
+        error = e
+    return {'users': users, 'error': error}
+
+
+# functions related to searching users from all users
 async def search_user(
     db: Database,
-    # curr_user: Dict[str, str],
+    curr_user: Dict[str, str],
     search_option: str,  # email or name
     search_filter: str,
-    limit: int = None,
+    limit: int = SEARCH_MAX_LIMIT,
     offset: int = 0
 ):
     assert search_option in ('email', 'name')
 
-    # user_id = curr_user["user_id"]
-    user_id = '543449a2-9225-479e-bf0c-c50da6b16b7c'
+    user_id = curr_user["user_id"]
 
     search_filter = search_filter.lower()
-    if limit is not None:
-        limit = min(SEARCH_MAX_LIMIT, limit)
+    limit = min(SEARCH_MAX_LIMIT, limit)
 
     # get friends of user_id (user_id, friendship_state)
     user_friends1 = (
@@ -372,9 +455,8 @@ async def search_user(
         .order_by(search_result.c.match_score.desc().nullslast())
         .order_by(search_result.c.user_id.desc().nullslast())
         .offset(offset)
+        .limit(limit)
     )
-    if limit is not None:
-        query = query.limit(limit)
 
     users, error = None, None
     try:

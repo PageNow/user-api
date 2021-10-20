@@ -134,6 +134,72 @@ FROM search_result LEFT JOIN search_result_mutual_friends
 ORDER BY accepted_state DESC NULLS LAST, mutual_friend_count DESC, match_score DESC, user_id DESC;
 -- friend -> mutual friend count -> match_score -> user_id
 
+-- get all friendship requests users have received and not accepted yet
+WITH friends_received AS (
+    SELECT * FROM friendship_table
+    WHERE user_id2 = '543449a2-9225-479e-bf0c-c50da6b16b7c'
+        AND accepted_at IS NULL
+)
+SELECT user_id, first_name, last_name, description, profile_image_extension, requested_at
+FROM user_table INNER JOIN friends_received
+    ON friends_received.user_id1 = user_table.user_id
+ORDER BY requested_at DESC;
+
+
+-- get a list of mutual friends between two users
+WITH my_friends AS (
+    SELECT user_id1 AS friend_id FROM friendship_table
+    WHERE user_id2 = '543449a2-9225-479e-bf0c-c50da6b16b7c'
+        AND accepted_at IS NOT NULL
+    UNION
+    SELECT user_id2 AS friend_id FROM friendship_table
+    WHERE user_id1 = '543449a2-9225-479e-bf0c-c50da6b16b7c'
+        AND accepted_at IS NOT NULL
+), user_friends AS (
+    SELECT user_id1 AS friend_id FROM friendship_table
+    WHERE user_id2 = 'cc06ed68-5909-4802-bd0c-7cf0b0a1c313'
+        AND accepted_at IS NOT NULL
+    UNION
+    SELECT user_id2 AS friend_id FROM friendship_table
+    WHERE user_id1 = 'cc06ed68-5909-4802-bd0c-7cf0b0a1c313'
+        AND accepted_at IS NOT NULL
+), mutual_friends AS (
+    SELECT my_friends.friend_id AS user_id FROM my_friends INNER JOIN user_friends
+        ON my_friends.friend_id = user_friends.friend_id
+)
+SELECT user_table.user_id, first_name, last_name, description, profile_image_extension
+FROM user_table INNER JOIN mutual_friends
+    ON user_table.user_id = mutual_friends.user_id
+
+
+-- get all friendship requests users have received and not accepted yet (DEPRECATED - don't need mutual friend count)
+WITH friends_received AS (
+    SELECT * FROM friendship_table
+    WHERE user_id2 = '543449a2-9225-479e-bf0c-c50da6b16b7c'
+        AND accepted_at IS NULL
+), friends_received_result AS (
+    SELECT user_id, first_name, last_name, description, profile_image_extension, requested_at
+    FROM user_table INNER JOIN friends_received
+        ON friends_received.user_id1 = user_table.user_id
+), friends AS (
+    SELECT user_id1, user_id2 FROM friendship_table WHERE accepted_at IS NOT NULL
+), friends_received_with_friends AS (
+    SELECT user_id, first_name, last_name, description, profile_image_extension,
+        friends.user_id2 AS friend_id, requested_at
+    FROM friends_received_result LEFT JOIN friends ON user_id = user_id1
+    UNION
+    SELECT user_id, first_name, last_name, description, profile_image_extension,
+        friends.user_id1 AS friend_id, requested_at
+    FROM friends_received_result LEFT JOIN friends ON user_id = user_id2
+), friends_received_mutual_friends AS (
+    SELECT friends_received_with_friends.user_id AS user_id,
+        COALESCE(COUNT(friend_id), 0) AS mutual_friend_count
+    FROM friends_received_with_friends
+    GROUP BY friends_received_with_friends.user_id
+)
+SELECT * FROM friends_received_mutual_friends;
+
+
 -- DEPRECATED --
 -- get user search result using email (DEPRECATED - not returning mutual friends)
 WITH friends AS (

@@ -96,46 +96,32 @@ async def check_friendship_request(
 
 
 async def get_all_friendship_requests(db: Database, curr_user_id: str):
-    """ Get friendship requests that the current user has not accepted yet. """
-    query = (
-        friendship_table.select()
-        .where((friendship_table.c.user_id2 == curr_user_id) &
-               (friendship_table.c.accepted_at.is_(None)))
-    )
-    request_arr, error = None, None
-    try:
-        request_arr = await db.fetch_all(query)
-    except Exception as e:
-        logging.error(e)
-        error = e
-    return {'request_arr': request_arr, 'error': error}
-
-
-async def get_all_friendship_request_users(db: Database, curr_user_id: str):
     """
     Get user summary info of users who sent friend requests but has not
     been accepted yet.
     user_id1 is the other user and user_id2 is the current user
     in friendship table.
     """
-    friendship_table_filtered = (
+    friend_request_received = (
         friendship_table.select()
         .where((friendship_table.c.user_id2 == curr_user_id) &
                (friendship_table.c.accepted_at.is_(None)))
-    ).alias('friendship_table_filtered')
+    ).cte().alias('friend_request_received')
+
     query = (
         select([
             user_table.c.user_id, user_table.c.first_name,
             user_table.c.last_name, user_table.c.description,
-            user_table.c.profile_image_uploaded_at,
-            user_table.c.profile_image_extension
+            user_table.c.profile_image_extension,
+            friend_request_received.c.requested_at
         ])
         .select_from(
             user_table.join(
-                friendship_table_filtered,
-                friendship_table_filtered.c.user_id1 == user_table.c.user_id
+                friend_request_received,
+                friend_request_received.c.user_id1 == user_table.c.user_id
             )
         )
+        .order_by(friend_request_received.c.requested_at.desc())
     )
     users, error = None, None
     try:
