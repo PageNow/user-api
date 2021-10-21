@@ -66,6 +66,32 @@ async def update_user(
     return user_info
 
 
+@router.put("/me/domain_array/{share_type}", response_model=UserPrivate)
+async def update_user_domain_allow_array(
+    domain_array: List[str],
+    share_type: str,
+    db: Database = Depends(get_db),
+    curr_user: Dict[str, str] = Depends(get_current_user)
+):
+    if share_type not in ('allow', 'deny'):
+        return HTTPException(status_code=HTTP_400_BAD_REQUEST,
+                             detail="share_type must be 'allow' or 'deny'")
+
+    db_user = await crud_user.get_user_by_id(db, curr_user['user_id'])
+    if db_user is None:
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND,
+                            detail="User not found")
+
+    error = await crud_user.update_domain_array(db, curr_user, domain_array,
+                                                share_type)
+    if error is not None:
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=error)
+
+    user_info = await crud_user.get_user_by_id(db, curr_user['user_id'])
+    return user_info
+
+
 @router.get("/me", response_model=UserPrivate)
 async def get_user_private(
     db: Database = Depends(get_db),

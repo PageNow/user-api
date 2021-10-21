@@ -83,6 +83,37 @@ async def update_user(
     return error
 
 
+async def update_domain_array(
+    db: Database,
+    curr_user: Dict[str, str],
+    domain_array: List[str],
+    share_type: str  # 'allow' or 'deny'
+):
+    if share_type == 'allow':
+        user_dict = {
+            "domain_allow_array": domain_array
+        }
+    elif share_type == 'deny':
+        user_dict = {
+            "domain_deny_array": domain_array
+        }
+    else:
+        return "Invalid share_type"
+
+    query = (
+        user_table.update()
+        .where(user_table.c.user_id == curr_user['user_id'])
+        .values(**user_dict)
+    )
+    error = None
+    try:
+        await db.execute(query)
+    except Exception as e:
+        print(e)
+        error = e
+    return error
+
+
 async def update_profile_upload_time(
     db: Database,
     user_id: str,
