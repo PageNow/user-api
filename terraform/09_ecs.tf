@@ -1,3 +1,4 @@
+# Production ECS
 resource "aws_ecs_cluster" "production" {
     name = "${var.ecs_cluster_name}-cluster"
 }
@@ -5,7 +6,7 @@ resource "aws_ecs_cluster" "production" {
 resource "aws_launch_configuration" "ecs" {
     name                        = "${var.ecs_cluster_name}-cluster"
     image_id                    = lookup(var.amis, var.region)
-    instance_type               = var.instance_type
+    instance_type               = var.prod_instance_type
     security_groups             = [aws_security_group.ecs.id]
     iam_instance_profile        = aws_iam_instance_profile.ecs.name
     key_name                    = aws_key_pair.production.key_name

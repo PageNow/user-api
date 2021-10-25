@@ -21,30 +21,6 @@ variable "private_subnet_2_cidr" {
     description = "CIDR Block for Private Subnet 2"
     default     = "10.0.4.0/24"
 }
-# variable "presence_redis_subnet_1_cidr" {
-#     description = "CIDR Block for Presence Redis Subnet 1"
-#     default     = "10.0.5.0/24"
-# }
-# variable "presence_redis_subnet_2_cidr" {
-#     description = "CIDR Block for Presence Redis Subnet 2"
-#     default     = "10.0.6.0/24"
-# }
-# variable "presence_lambda_subnet_1_cidr" {
-#     description = "CIDR Block for Presence Lambda Subnet 1"
-#     default     = "10.0.7.0/24"
-# }
-# variable "presence_lambda_subnet_2_cidr" {
-#     description = "CIDR Block for Presence Lambda Subnet 2"
-#     default     = "10.0.8.0/24"
-# }
-# variable "presence_redis_subnet_name" {
-#     description = "Name of Presence Redis Subnet"
-#     default     = "Presence Redis"
-# }
-# variable "presence_lambda_subnet_name" {
-#     description = "Name of Presence Lambda Subnet"
-#     default     = "Presence Lambda"
-# }
 variable "availability_zones" {
     description = "Availability zones"
     type        = list(string)
@@ -79,7 +55,7 @@ variable "amis" {
         us-west-2 = "ami-06cb61a83c506fe88"
     }
 }
-variable "instance_type" {
+variable "prod_instance_type" {
     default = "t2.micro"
 }
 variable "docker_image_url_pagenow_user_api" {

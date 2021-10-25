@@ -59,7 +59,7 @@ Set AWS credentials as environment variables
 ```shell
 $ export AWS_ACCESS_KEY_ID="YOUR_AWS_ACCESS_KEY_ID"
 $ export AWS_SECRET_ACCESS_KEY="YOUR_AWS_SECRET_ACCESS_KEY"
-$ export AWS_DEFAULT_REGION="us-east-1"
+$ export AWS_DEFAULT_REGION="YOUR_AWS_REGION"
 ```
 
 Set RDS password by running
@@ -79,8 +79,23 @@ Set up API Gateway following instructions at https://docs.aws.amazon.com/apigate
 
 1. Change the target of the VPC route table 0.0.0.0/0 to Internet Gateway of the VPC.
 2. SSH into EC2 instance.
-3. Run ```docker ps``` to obtain the docker container id.
-4. Run ```docker exec -it DOCKER_CONTAINER_ID alembic upgrade head```
+3. Run `docker ps` to obtain the docker container id.
+4. Run `docker exec -it DOCKER_CONTAINER_ID alembic upgrade head`.
+
+### RDS Access using Bastion instance
+
+1. Get the public IP address of bastion-instance and the private IP address of private-instance.
+2. Update the SSH config file as follows.
+```
+Host bastion-instance
+   HostName <Bastion Public IP>
+   User ubuntu
+Host private-instance
+   HostName <Private IP>
+   User ubuntu
+   ProxyCommand ssh -q -W %h:%p bastion-instance
+```
+3. SSH into private-instance by running `ssh -i "~/.ssh/id_rsa" private-instance`.
 
 ### Update ECS Service after updating Django backend
 
@@ -109,6 +124,7 @@ $ python update-ecs.py --cluster=user-api-production-cluster --service=user-api-
 
 * http://www.dein.fr/writing-a-subquery-with-sqlalchemy-core.html
 * https://overiq.com/sqlalchemy-101/crud-using-sqlalchemy-core/
+* https://stackoverflow.com/questions/3576382/select-as-in-sqlalchemy
 
 ### Asyncio
 
@@ -120,6 +136,9 @@ $ python update-ecs.py --cluster=user-api-production-cluster --service=user-api-
 
 * https://aws.plainenglish.io/have-your-lambda-functions-connect-to-rds-through-rds-proxy-c94072560eee
 * https://www.jbssolutions.com/resources/blog/amazon-rds-proxy-terraform/
+
+### Connecting to AWS instance in private subnet
+* https://towardsdatascience.com/connecting-to-an-ec2-instance-in-a-private-subnet-on-aws-38a3b86f58fb
 
 ## DEBUG NOTES
 

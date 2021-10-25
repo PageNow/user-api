@@ -41,12 +41,12 @@ resource "aws_api_gateway_rest_api" "production" {
 #     }
 # }
 
-resource "aws_api_gateway_deployment" "production" {
-    rest_api_id = aws_api_gateway_rest_api.production.id
-}
+# resource "aws_api_gateway_deployment" "production" {
+#     rest_api_id = aws_api_gateway_rest_api.production.id
+# }
 
-resource "aws_api_gateway_stage" "production" {
-    deployment_id = aws_api_gateway_deployment.production.id
-    rest_api_id   = aws_api_gateway_rest_api.production.id
-    stage_name    = "dev"
-}
+# resource "aws_api_gateway_stage" "production" {
+#     deployment_id = aws_api_gateway_deployment.production.id
+#     rest_api_id   = aws_api_gateway_rest_api.production.id
+#     stage_name    = "dev"
+# }
