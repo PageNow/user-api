@@ -140,6 +140,10 @@ $ python update-ecs.py --cluster=user-api-production-cluster --service=user-api-
 ### Connecting to AWS instance in private subnet
 * https://towardsdatascience.com/connecting-to-an-ec2-instance-in-a-private-subnet-on-aws-38a3b86f58fb
 
+### Testing
+
+* https://testdriven.io/blog/fastapi-crud/
+
 ## DEBUG NOTES
 
 * sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) could not translate host name "db" to address: Name or service not known
