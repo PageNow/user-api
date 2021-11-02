@@ -4,7 +4,8 @@ import logging
 from logging.config import fileConfig
 
 import alembic
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import engine_from_config, create_engine, pool
+from psycopg2 import DatabaseError
 
 # we're appending the app directory to our path here
 # so that we can import config easily
@@ -15,7 +16,7 @@ sys.path.append(BASE_DIR)
 import app.models.user
 import app.models.friendship
 
-from app.core.config import DATABASE_URL
+from app.core.config import DATABASE_URL, POSTGRES_DB
 from app.db.db import metadata
 
 
@@ -33,6 +34,18 @@ def run_migrations_online() -> None:
     """
     Run migrations in 'online' mode
     """
+
+    # handle testing config for migrations
+    if os.environ.get("TESTING"):
+        # connect to primary db
+        default_engine = create_engine(
+            str(DATABASE_URL), isolation_level="AUTOCOMMIT"
+        )
+        # drop testing db if it exists and create a fresh one
+        with default_engine.connect() as default_conn:
+            default_conn.execute(f"DROP DATABASE IF EXISTS {POSTGRES_DB}_test")
+            default_conn.execute(f"CREATE DATABASE {POSTGRES_DB}_test")
+
     connectable = config.attributes.get("connection", None)
     config.set_main_option("sqlalchemy.url", str(DATABASE_URL))
     if connectable is None:
@@ -55,6 +68,12 @@ def run_migrations_offline() -> None:
     """
     Run migrations in 'offline' mode.
     """
+
+    if os.environ.get("TESTING"):
+        raise DatabaseError(
+            "Running testing migrations offline currently not permitted."
+        )
+
     alembic.context.configure(
         url=str(DATABASE_URL),
         target_metadata=target_metadata,

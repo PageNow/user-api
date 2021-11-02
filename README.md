@@ -143,6 +143,8 @@ $ python update-ecs.py --cluster=user-api-production-cluster --service=user-api-
 ### Testing
 
 * https://testdriven.io/blog/fastapi-crud/
+* https://www.jeffastor.com/blog/testing-fastapi-endpoints-with-docker-and-pytest
+
 
 ## DEBUG NOTES
 
