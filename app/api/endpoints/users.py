@@ -12,7 +12,7 @@ from databases import Database
 import boto3
 from botocore.exceptions import ClientError
 
-from app.crud import crud_user
+from app.crud import crud_user, crud_friendship
 from app.schemas.user import UserPublic, UserPrivate, UserCreate,\
     UserSummary, UserUpdate
 from app.api.deps import get_db, get_executor, get_s3_client
@@ -152,6 +152,57 @@ async def get_user_mutual_friends(
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Sorry, something went wrong")
     return res['users']
+
+
+@router.get("/id/{user_id}/mutual-friends/count")
+async def get_user_mutual_friend_count(
+    user_id: str,
+    db: Database = Depends(get_db),
+    curr_user: Dict[str, str] = Depends(get_current_user)
+):
+    res = await crud_user.get_mutual_friend_count(
+        db, curr_user, user_id
+    )
+    if res['error'] is not None:
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Sorry, something went wrong")
+    return res['mutual_friend_count']
+
+
+@router.get("/id/{user_id}/friends")
+async def get_user_friends(
+    user_id: str,
+    limit: int = 15,
+    offset: int = 0,
+    db: Database = Depends(get_db),
+    curr_user: Dict[str, str] = Depends(get_current_user)
+):
+    if limit < 0 or offset < 0:
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST,
+                            detail="Limit and offset cannot be negative")
+    if limit == 0:
+        return []
+
+    res = await crud_friendship.get_user_friends(
+        db, user_id, limit=limit, offset=offset
+    )
+    if res['error'] is not None:
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Sorry, something went wrong")
+    return res['friends']
+
+
+@router.get("/id/{user_id}/friends/count")
+async def get_user_friend_count(
+    user_id: str,
+    db: Database = Depends(get_db),
+    curr_user: Dict[str, str] = Depends(get_current_user)
+):
+    res = await crud_friendship.get_user_friend_count(db, user_id)
+    if res['error'] is not None:
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Sorry, something went wrong")
+    return res['friend_count']
 
 
 # TODO: accept other file types

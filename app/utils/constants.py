@@ -117,7 +117,9 @@ DEFAULT_DOMAIN_ALLOW_ARRAY = [
     'glassdoor.com',
     'css-tricks.com',
     'heroku.com',
-    'devpost.com'
+    'devpost.com',
+    'pagenow.io',
+    'testdriven.io'
 ]
 
 DEFAULT_DOMAIN_DENY_ARRAY = [

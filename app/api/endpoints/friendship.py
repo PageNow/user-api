@@ -219,7 +219,7 @@ async def search_friends_by_name(
     return res['friends']
 
 
-# get all friends of the user
+# get all friends of the current user
 @router.get("/all")
 async def get_all_friends(
     db: Database = Depends(get_db),

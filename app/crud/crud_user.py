@@ -3,7 +3,7 @@ import datetime
 
 from databases import Database
 from sqlalchemy import select, text, case, union, func, Integer, String
-from sqlalchemy.sql.functions import coalesce, max as max_
+from sqlalchemy.sql.functions import coalesce, count, max as max_
 from sqlalchemy.sql.expression import literal, cast
 
 from app.models.user import user_table
@@ -159,7 +159,6 @@ async def delete_profile_image_info(
     return error
 
 
-# get mutual friends between current user and input user
 async def get_mutual_friends(
     db: Database,
     curr_user: Dict[str, str],
@@ -167,6 +166,7 @@ async def get_mutual_friends(
     limit: int = SEARCH_MAX_LIMIT,
     offset: int = 0
 ):
+    """ Get mutual friends between current user and input user """
     curr_user_id = curr_user["user_id"]
     limit = min(SEARCH_MAX_LIMIT, limit)
     curr_user_friends1 = (
@@ -246,6 +246,76 @@ async def get_mutual_friends(
     return {'users': users, 'error': error}
 
 
+async def get_mutual_friend_count(
+    db: Database,
+    curr_user: Dict[str, str],
+    user_id: str
+):
+    """
+    Get the number of mutual friends between current user and input user
+    """
+    curr_user_id = curr_user["user_id"]
+    curr_user_friends1 = (
+        select([
+            friendship_table.c.user_id1.label('friend_id')
+        ])
+        .select_from(friendship_table)
+        .where((friendship_table.c.user_id2 == curr_user_id)
+               & friendship_table.c.accepted_at.isnot(None))
+    )
+    curr_user_friends2 = (
+        select([
+            friendship_table.c.user_id2.label('friend_id')
+        ])
+        .select_from(friendship_table)
+        .where((friendship_table.c.user_id1 == curr_user_id)
+               & friendship_table.c.accepted_at.isnot(None))
+    )
+    curr_user_friends = union(
+        curr_user_friends1, curr_user_friends2
+    ).cte().alias('curr_user_friends')
+
+    user_friends1 = (
+        select([
+            friendship_table.c.user_id1.label('friend_id')
+        ])
+        .select_from(friendship_table)
+        .where((friendship_table.c.user_id2 == user_id)
+               & friendship_table.c.accepted_at.isnot(None))
+    )
+    user_friends2 = (
+        select([
+            friendship_table.c.user_id2.label('friend_id')
+        ])
+        .select_from(friendship_table)
+        .where((friendship_table.c.user_id1 == user_id)
+               & friendship_table.c.accepted_at.isnot(None))
+    )
+    user_friends = union(
+        user_friends1, user_friends2
+    ).cte().alias('user_friends')
+
+    mutual_friends = (
+        select([curr_user_friends.c.friend_id.label('user_id')])
+        .select_from(
+            curr_user_friends.join(
+                user_friends,
+                curr_user_friends.c.friend_id == user_friends.c.friend_id
+            )
+        )
+    ).cte().alias('mutual_friends')
+
+    query = select([count()]).select_from(mutual_friends)
+
+    mutual_friend_cnt, error = 0, None
+    try:
+        mutual_friend_cnt = await db.fetch_one(query)
+    except Exception as e:
+        logging.error(e)
+        error = e
+    return {'mutual_friend_count': mutual_friend_cnt, 'error': error}
+
+
 # functions related to searching users from all users
 async def search_user(
     db: Database,
@@ -288,7 +358,7 @@ async def search_user(
         .where(friendship_table.c.user_id2 == user_id)
     )
     user_friends = (
-        union(user_friends1, user_friends2).cte().alias('user_firends')
+        union(user_friends1, user_friends2).cte().alias('user_friends')
     )
 
     # get accepted friends of user_id (user_id)

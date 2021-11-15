@@ -1,7 +1,7 @@
 import datetime
 
-from sqlalchemy import select
-from sqlalchemy.sql.functions import coalesce
+from sqlalchemy import select, union
+from sqlalchemy.sql.functions import count
 from databases import Database
 
 from app.models.friendship import friendship_table
@@ -152,39 +152,92 @@ async def delete_friendship(
 
 
 # functions related to getting friends (used for search, etc.)
-async def get_all_friends(db: Database, user_id: str):
+async def get_user_friends(
+    db: Database,
+    user_id: str,
+    limit: int = 15,
+    offset: int = 0
+):
+    """ Gets the list of friends of the user """
     friends1 = (
         select([
-            friendship_table.c.user_id2.label("user_id"),
-            coalesce(
-                friendship_table.c.accepted_at,
-                datetime.datetime.utcfromtimestamp(0)
-            ).label("accepted_at")
+            friendship_table.c.user_id2.label("user_id")
         ])
         .select_from(friendship_table)
-        .where(friendship_table.c.user_id1 == user_id)
+        .where((friendship_table.c.user_id1 == user_id)
+               & friendship_table.c.accepted_at.isnot(None))
     )
     friends2 = (
         select([
             friendship_table.c.user_id1.label("user_id"),
-            coalesce(
-                friendship_table.c.accepted_at,
-                datetime.datetime.utcfromtimestamp(0)
-            ).label("accepted_at")
         ])
         .select_from(friendship_table)
-        .where(friendship_table.c.user_id2 == user_id)
+        .where((friendship_table.c.user_id2 == user_id)
+               & friendship_table.c.accepted_at.isnot(None))
     )
-    query = friends1.union_all(friends2)
+    friends = union(
+        friends1, friends2
+    ).cte().alias('friends')
+
+    query = (
+        select([
+            user_table.c.user_id, user_table.c.first_name,
+            user_table.c.last_name, user_table.c.description,
+            user_table.c.profile_image_extension
+        ])
+        .select_from(
+            user_table.join(
+                friends,
+                user_table.c.user_id == friends.c.user_id
+            )
+        )
+        .order_by(user_table.c.first_name.asc())
+        .order_by(user_table.c.last_name.asc())
+        .limit(limit)
+        .offset(offset)
+    )
 
     friends, error = None, None
     try:
         friends = await db.fetch_all(query)
-        print(friends)
     except Exception as e:
         logging.error(e)
         error = e
     return {'friends': friends, 'error': error}
+
+
+async def get_user_friend_count(
+    db: Database,
+    user_id: str
+):
+    """ Get the number of friends of the user """
+    friends1 = (
+        select([
+            friendship_table.c.user_id2.label("user_id")
+        ])
+        .select_from(friendship_table)
+        .where((friendship_table.c.user_id1 == user_id)
+               & friendship_table.c.accepted_at.isnot(None))
+    )
+    friends2 = (
+        select([
+            friendship_table.c.user_id1.label("user_id"),
+        ])
+        .select_from(friendship_table)
+        .where((friendship_table.c.user_id2 == user_id)
+               & friendship_table.c.accepted_at.isnot(None))
+    )
+    friends = (
+        union(friends1, friends2).cte().alias('friends')
+    )
+    query = select([count()]).select_from(friends)
+    friend_cnt, error = 0, None
+    try:
+        friend_cnt = await db.fetch_one(query)
+    except Exception as e:
+        logging.error(e)
+        error = e
+    return {'friend_count': friend_cnt, 'error': error}
 
 
 async def get_friends_by_name(

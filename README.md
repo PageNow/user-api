@@ -53,6 +53,13 @@ $ docker build -t 257206538165.dkr.ecr.us-west-2.amazonaws.com/pagenow-user-api:
 $ docker push 257206538165.dkr.ecr.us-west-2.amazonaws.com/pagenow-user-api:latest
 ```
 
+### Update ECS Service after updating ECS code
+
+After building and pushgin Docker image to ECR, run
+```shell
+$ python update-ecs.py --cluster=user-api-production-cluster --service=user-api-production-service
+```
+
 ### Terraform Setup
 
 Set AWS credentials as environment variables
@@ -85,7 +92,7 @@ Set up API Gateway following instructions at https://docs.aws.amazon.com/apigate
 ### RDS Access using Bastion instance
 
 1. Get the public IP address of bastion-instance and the private IP address of private-instance.
-2. Update the SSH config file as follows.
+2. Update the SSH config file (`~/.ssh/config`) as follows.
 ```
 Host bastion-instance
    HostName <Bastion Public IP>
@@ -96,13 +103,6 @@ Host private-instance
    ProxyCommand ssh -q -W %h:%p bastion-instance
 ```
 3. SSH into private-instance by running `ssh -i "~/.ssh/id_rsa" private-instance`.
-
-### Update ECS Service after updating Django backend
-
-After building and pushgin Docker image to ECR, run
-```shell
-$ python update-ecs.py --cluster=user-api-production-cluster --service=user-api-production-service
-```
 
 ## TODO
 
