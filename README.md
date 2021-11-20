@@ -1,38 +1,62 @@
 # user-api
 
-## Local Development
+## Architecture
 
-### Run without docker
+Architecture diagrams are coming soon!
 
-To run the server locally (not through docker), run
-```shell
-$ export RDS_HOST=localhost
-$ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
+## Project Structure
 
-### Run with docker
+user-api uses FastAPI framework with mostly asynchronous operations.
 
-Run
-```shell
-$ docker-compose up -d # build and deploy
-```
+### api
 
-To install extension 'uuid-ossp', 
+Endpoints are defined in `./app/api/endpoints/`. AWS Cognito JWT authenitcation handling is defined in `./app/api/auth/` and injected as dependencies for all the endpoints that require authentiation.
 
-### Connect to dockerized postgres
+### crud
 
-Run
-```shell
-docker exec -it postgres_local psql -h localhost -U USERNAME --dbname=DBNAME
-```
+All functionalities that involve data model i.e. CRUD functions can be found in `./app/crud/`.
 
-The extension ```uuid-ossp``` must be installed by running
-```shell
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-```
-in postgres shell before migrating..
+### db
 
-### Postgres migration
+The app connects to the database when it starts running and closes when it stops. The connectino management is handled in `./app/db/`.
+
+### models
+
+The table definitions are stored in `./app/schema`. 
+
+### schemas
+
+We use SQLAlchemy, thus having a layer on top of the raw data model. The SQLAlchemy models are defined in `./app/models/`.
+
+## Components
+
+### AWS ECS
+
+We use ECS (Elastic Container Service) to run the backend. The API code is dockerized and uploaded to ECR (Elastic Container Registry), which will be run by the instances in ECS.
+
+### AWS Load Balancer
+
+We run two ECS tasks in different availability zones. Load balancer redirects incoming traffic into one of these tasks.
+
+### AWS Auto Scaling
+
+Dependin on the utilization level, the number of container instances in each cluster is adjusted.
+
+### AWS RDS
+
+Core user database that is used by [presence-api](https://github.com/PageNow/presence-api) and [chat-api](https://github.com/PageNow/chat-api) as well.
+
+* `user_table` stores user information.
+
+* `friendship_table` stores friendship relationships. We use a single table to express the relationship between two users. We distinuish no friendship, pending friendship, and accepted friendship by the *accepted_at* attributed. 
+
+### AWS API Gateway
+
+* API Gateway passes request through to the load balancer. 
+
+## Setup
+
+### Database (Postgres) migration
 
 Run
 ```shell
@@ -42,9 +66,33 @@ $ docker-compose run web alembic upgrade head # migrate
 
 To reset alembic versions, connect to docker postgres, drop all the tables in the datbase.
 
+## Running Locally
+
+### Running by itself
+
+To run the server locally (not with docker), run
+```shell
+$ export RDS_HOST=localhost
+$ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+### Running on Docker
+
+Run
+```shell
+$ docker-compose up -d # build and deploy
+```
+
+### Connect to Dockerized postgres
+
+Run
+```shell
+docker exec -it postgres_local psql -h localhost -U USERNAME --dbname=DBNAME
+```
+
 ## Cloud Development
 
-### Uploading Docker Image to ECR
+### Uploading Docker image to ECR
 
 Execute the following commands as instructed [here](https://us-west-2.console.aws.amazon.com/ecr/repositories/private/257206538165/pagenow-user-api?region=us-west-2)
 ```shell
@@ -53,7 +101,7 @@ $ docker build -t 257206538165.dkr.ecr.us-west-2.amazonaws.com/pagenow-user-api:
 $ docker push 257206538165.dkr.ecr.us-west-2.amazonaws.com/pagenow-user-api:latest
 ```
 
-### Update ECS Service after updating ECS code
+### Update ECS task definition after updating ECS code
 
 After building and pushgin Docker image to ECR, run
 ```shell
@@ -82,14 +130,9 @@ $ terraform apply
 
 Set up API Gateway following instructions at https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-create-api-as-simple-proxy-for-http.html where endpoint url is 'http://${alb_dns}/{proxy}' and deploy.
 
-### ECS RDS Setup
-
-1. Change the target of the VPC route table 0.0.0.0/0 to Internet Gateway of the VPC.
-2. SSH into EC2 instance.
-3. Run `docker ps` to obtain the docker container id.
-4. Run `docker exec -it DOCKER_CONTAINER_ID alembic upgrade head`.
-
 ### RDS Access using Bastion instance
+
+We access RDS via a bastion EC2 instance because the ECS instances are inside private subnets.
 
 1. Get the public IP address of bastion-instance and the private IP address of private-instance.
 2. Update the SSH config file (`~/.ssh/config`) as follows.
@@ -104,9 +147,11 @@ Host private-instance
 ```
 3. SSH into private-instance by running `ssh -i "~/.ssh/id_rsa" private-instance`.
 
-## TODO
+### ECS RDS Setup
 
-[] Logging errors properly
+1. SSH into EC2 instance following the steps above.
+2. Run `docker ps` to obtain the docker container id.
+3. Run `docker exec -it DOCKER_CONTAINER_ID alembic upgrade head`.
 
 ## References
 
@@ -144,15 +189,3 @@ Host private-instance
 
 * https://testdriven.io/blog/fastapi-crud/
 * https://www.jeffastor.com/blog/testing-fastapi-endpoints-with-docker-and-pytest
-
-
-## DEBUG NOTES
-
-* sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) could not translate host name "db" to address: Name or service not known
-
-- Postgres container exited with error message ```PostgreSQL Database directory appears to contain a database; Skipping initialization```
-- Ran ```docker-compose down --volumes```
-
-## Notes
-
-* Setting up CORS is not supported (to be more accurate, unnecessarily complicated) compared to the one click if you do it at console. Also, redirecting ANY method's url path parameter to integration path paramter is not supported by Terraform. So, I left that part to be done at console.
