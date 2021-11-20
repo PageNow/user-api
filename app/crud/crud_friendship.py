@@ -1,7 +1,8 @@
 import datetime
 
-from sqlalchemy import select, union
-from sqlalchemy.sql.functions import count
+from sqlalchemy import select, union, case, Integer
+from sqlalchemy.sql.functions import coalesce, count
+from sqlalchemy.sql.expression import literal, cast
 from databases import Database
 
 from app.models.friendship import friendship_table
@@ -18,6 +19,7 @@ async def check_friendship(
     curr_user_id: str,
     user_id: str
 ):
+    """ Check the friendship state between the current user and input user """
     query = (
         friendship_table.select()
         .where(((friendship_table.c.user_id1 == curr_user_id)
@@ -155,10 +157,12 @@ async def delete_friendship(
 async def get_user_friends(
     db: Database,
     user_id: str,
+    curr_user_id: str,
     limit: int = 15,
     offset: int = 0
 ):
     """ Gets the list of friends of the user """
+    # get the friends of user_id
     friends1 = (
         select([
             friendship_table.c.user_id2.label("user_id")
@@ -179,16 +183,52 @@ async def get_user_friends(
         friends1, friends2
     ).cte().alias('friends')
 
+    # get the friends/pending friends of curr_user
+    curr_user_friends1 = (
+        select([
+            friendship_table.c.user_id2.label("user_id"),
+            case(
+                [(friendship_table.c.accepted_at.isnot(None),
+                  cast(literal(2), Integer))],
+                else_=cast(literal(1), Integer)
+            ).label("friendship_state")
+        ])
+        .select_from(friendship_table)
+        .where(friendship_table.c.user_id1 == curr_user_id)
+    )
+    curr_user_friends2 = (
+        select([
+            friendship_table.c.user_id1.label("user_id"),
+            case(
+                [(friendship_table.c.accepted_at.isnot(None),
+                  cast(literal(2), Integer))],
+                else_=cast(literal(1), Integer)
+            ).label("friendship_state")
+        ])
+        .select_from(friendship_table)
+        .where(friendship_table.c.user_id2 == curr_user_id)
+    )
+    curr_user_friends = (
+        union(curr_user_friends1, curr_user_friends2)
+        .cte().alias('curr_user_friends')
+    )
+
     query = (
         select([
             user_table.c.user_id, user_table.c.first_name,
             user_table.c.last_name, user_table.c.description,
-            user_table.c.profile_image_extension
+            user_table.c.profile_image_extension,
+            coalesce(curr_user_friends.c.friendship_state, 0).label(
+                'friendship_state')
         ])
         .select_from(
             user_table.join(
                 friends,
                 user_table.c.user_id == friends.c.user_id
+            ).join(
+                curr_user_friends,
+                user_table.c.user_id == curr_user_friends.c.user_id,
+                isouter=True
             )
         )
         .order_by(user_table.c.first_name.asc())

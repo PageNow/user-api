@@ -52,11 +52,11 @@ variable "ecs_cluster_name" {
 variable "amis" {
     description = "Which AMI to spawn"
     default = {
-        us-west-2 = "ami-06cb61a83c506fe88"
+        us-west-2 = "ami-06cb61a83c506fe88" # important to choose Amazon ECS-optimized AMI
     }
 }
 variable "prod_instance_type" {
-    default = "t2.micro"
+    default = "t3.small"
 }
 variable "docker_image_url_pagenow_user_api" {
     description = "Docker image to run in the ECS cluster"
@@ -64,7 +64,7 @@ variable "docker_image_url_pagenow_user_api" {
 }
 variable "app_count" {
     description = "Number of Docker containers to run"
-    default     = 1
+    default     = 2
 }
 # variable "allowed_hosts" {
 #   description = "Domain name for allowed hosts"
@@ -82,7 +82,7 @@ variable "autoscale_max" {
 }
 variable "autoscale_desired" {
     description = "Desired autoscale (number of EC2)"
-    default     = "2"
+    default     = "4"
 }
 
 # RDS

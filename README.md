@@ -6,7 +6,7 @@ Architecture diagrams are coming soon!
 
 ## Project Structure
 
-user-api uses FastAPI framework with mostly asynchronous operations.
+user-api uses FastAPI framework with asynchronous REST endpoints and database queries.
 
 ### api
 
@@ -26,7 +26,7 @@ The table definitions are stored in `./app/schema`.
 
 ### schemas
 
-We use SQLAlchemy, thus having a layer on top of the raw data model. The SQLAlchemy models are defined in `./app/models/`.
+We use SQLAlchemy having a layer on top of the raw data model. The SQLAlchemy models are defined in `./app/models/`.
 
 ## Components
 
@@ -48,7 +48,7 @@ Core user database that is used by [presence-api](https://github.com/PageNow/pre
 
 * `user_table` stores user information.
 
-* `friendship_table` stores friendship relationships. We use a single table to express the relationship between two users. We distinuish no friendship, pending friendship, and accepted friendship by the *accepted_at* attributed. 
+* `friendship_table` stores friendship relationships. We use a single table to express the relationship between two users. We distinuish *none friendship*, *pending friendship*, and *accepted friendship* by the *accepted_at* attribute. 
 
 ### AWS API Gateway
 

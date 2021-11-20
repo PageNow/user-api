@@ -119,7 +119,8 @@ DEFAULT_DOMAIN_ALLOW_ARRAY = [
     'heroku.com',
     'devpost.com',
     'pagenow.io',
-    'testdriven.io'
+    'testdriven.io',
+    'plainenglish.io'
 ]
 
 DEFAULT_DOMAIN_DENY_ARRAY = [
@@ -128,8 +129,7 @@ DEFAULT_DOMAIN_DENY_ARRAY = [
     'amazon.com',
     'twitter.com',
     'messenger.com',
-    'gmail.com',
-    'mail.google.com'
+    'google.com'
 ]
 
 SEARCH_MAX_LIMIT = 15

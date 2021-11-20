@@ -184,7 +184,7 @@ async def get_user_friends(
         return []
 
     res = await crud_friendship.get_user_friends(
-        db, user_id, limit=limit, offset=offset
+        db, user_id, curr_user['user_id'], limit=limit, offset=offset
     )
     if res['error'] is not None:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,

@@ -5,5 +5,10 @@ resource "aws_autoscaling_group" "ecs-cluster" {
     desired_capacity     = var.autoscale_desired
     health_check_type    = "EC2"
     launch_configuration = aws_launch_configuration.ecs.name
-    vpc_zone_identifier  = [aws_subnet.private-subnet-1.id, aws_subnet.private-subnet-2.id]
+    vpc_zone_identifier  = [
+        aws_subnet.private-subnet-1.id, aws_subnet.private-subnet-2.id
+    ]
+    lifecycle {
+        create_before_destroy = true
+    }
 }
