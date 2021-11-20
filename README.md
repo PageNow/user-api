@@ -94,7 +94,7 @@ docker exec -it postgres_local psql -h localhost -U USERNAME --dbname=DBNAME
 
 ### Uploading Docker image to ECR
 
-Execute the following commands as instructed [here](https://us-west-2.console.aws.amazon.com/ecr/repositories/private/257206538165/pagenow-user-api?region=us-west-2)
+Execute the following commands as instructed at ECR console. Replace 257206538165 with your AWS Account ID.
 ```shell
 $ aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 257206538165.dkr.ecr.us-west-2.amazonaws.com
 $ docker build -t 257206538165.dkr.ecr.us-west-2.amazonaws.com/pagenow-user-api:latest .
