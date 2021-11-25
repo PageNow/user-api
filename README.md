@@ -4,6 +4,8 @@
 
 Architecture diagrams are coming soon!
 
+![user-api diagram](./images/user_api_overview.png)
+
 ## Project Structure
 
 user-api uses FastAPI framework with asynchronous REST endpoints and database queries.
@@ -189,3 +191,9 @@ Host private-instance
 
 * https://testdriven.io/blog/fastapi-crud/
 * https://www.jeffastor.com/blog/testing-fastapi-endpoints-with-docker-and-pytest
+
+### NAT Gateway
+
+* https://stackoverflow.com/questions/59525573/can-a-single-nat-gateway-span-across-multiple-az
+* https://stackoverflow.com/questions/42960678/what-is-the-difference-between-a-task-and-a-service-in-aws-ecs
+* https://www.freecodecamp.org/news/amazon-ecs-terms-and-architecture-807d8c4960fd/#:~:text=As%20seen%20above%2C%20a%20Cluster,Cluster%20can%20run%20many%20Services.
