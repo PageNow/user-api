@@ -8,7 +8,7 @@ from sqlalchemy.sql.expression import literal, cast
 
 from app.models.user import user_table
 from app.models.friendship import friendship_table
-from app.schemas.user import UserCreate, UserUpdate
+from app.schemas.user import UserBase, UserUpdate
 from app.utils.constants import DEFAULT_DOMAIN_ALLOW_ARRAY, \
     DEFAULT_DOMAIN_DENY_ARRAY, SEARCH_MAX_LIMIT
 from app.core.logger import logging
@@ -41,7 +41,7 @@ async def get_users_by_id(db: Database, user_id_arr: List[str]):
 async def create_user(
     db: Database,
     curr_user: Dict[str, str],
-    user: UserCreate
+    user: UserBase
 ):
     user_dict = user.dict()
     user_dict.update(curr_user)

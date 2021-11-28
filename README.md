@@ -153,7 +153,8 @@ Host private-instance
 
 1. SSH into EC2 instance following the steps above.
 2. Run `docker ps` to obtain the docker container id.
-3. Run `docker exec -it DOCKER_CONTAINER_ID alembic upgrade head`.
+3. Run `docker exec -it DOCKER_CONTAINER_ID alembic revision --autogenerate -m "MESSAGE"`
+4. Run `docker exec -it DOCKER_CONTAINER_ID alembic upgrade head`.
 
 ## References
 

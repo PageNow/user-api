@@ -54,11 +54,6 @@ class UserPrivate(UserPublic):
     domain_deny_array: List
 
 
-class UserCreate(UserBase):
-    dob: datetime.date
-    gender: str
-
-
 class UserUpdate(UserBase):
     description: str
     share_mode: str

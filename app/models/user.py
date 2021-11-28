@@ -14,7 +14,7 @@ user_table = Table(
     Column("first_name", String, nullable=False),
     Column("last_name", String, nullable=False),
 
-    Column("dob", Date, nullable=False),
+    Column("dob", Date, nullable=True),
     Column("dob_public", Boolean, server_default=false(), nullable=False),
 
     Column("created_at", DateTime, server_default=func.now(), nullable=False),
@@ -33,7 +33,7 @@ user_table = Table(
     ),
 
     # additional Info
-    Column("gender", String, nullable=False),
+    Column("gender", String, nullable=True),
     Column("gender_public", Boolean, server_default=false(), nullable=False),
     Column("school", String, server_default='', nullable=False),
     Column("school_public", Boolean, server_default=false(), nullable=False),
