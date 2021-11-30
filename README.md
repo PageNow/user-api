@@ -156,6 +156,12 @@ Host private-instance
 3. Run `docker exec -it DOCKER_CONTAINER_ID alembic revision --autogenerate -m "MESSAGE"`
 4. Run `docker exec -it DOCKER_CONTAINER_ID alembic upgrade head`.
 
+### Accessing RDS directly
+
+1. SSH into EC@ instance following the steps above.
+2. Run `docker ps` to obtain the docker container id.
+3. Run `docker exec -it postgres_local psql -h RDS_PROXY_ADDRESS -U USERNAME --dbname=DBNAME`
+
 ## References
 
 ### FastAPI with Postgres

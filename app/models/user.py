@@ -33,7 +33,7 @@ user_table = Table(
     ),
 
     # additional Info
-    Column("gender", String, nullable=True),
+    Column("gender", String, server_default='', nullable=False),
     Column("gender_public", Boolean, server_default=false(), nullable=False),
     Column("school", String, server_default='', nullable=False),
     Column("school_public", Boolean, server_default=false(), nullable=False),
