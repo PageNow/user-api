@@ -15,6 +15,8 @@ sys.path.append(BASE_DIR)
 # need to import models for alembic to include in its commit
 import app.models.user
 import app.models.friendship
+import app.models.share_notification
+import app.models.share_notification_seen
 
 from app.core.config import DATABASE_URL, POSTGRES_DB
 from app.db.db import metadata

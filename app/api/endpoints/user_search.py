@@ -1,4 +1,3 @@
-from app.api.auth.auth import get_current_user
 from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -8,6 +7,7 @@ from starlette.status import HTTP_400_BAD_REQUEST, \
 from databases import Database
 
 from app.api.deps import get_db
+from app.api.auth.auth import get_current_user
 from app.crud import crud_user
 from app.schemas.user import UserSummary
 

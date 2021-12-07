@@ -183,7 +183,7 @@ async def get_user_friends(
     if limit == 0:
         return []
 
-    res = await crud_friendship.get_user_friends(
+    res = await crud_friendship.get_user_friends_with_friendship_state(
         db, user_id, curr_user['user_id'], limit=limit, offset=offset
     )
     if res['error'] is not None:

@@ -153,8 +153,45 @@ async def delete_friendship(
     return error
 
 
+# get friends of the user
+async def get_all_user_friends(
+    db: Database,
+    user_id: str
+):
+    # get the friends of user_id
+    friends1 = (
+        select([
+            friendship_table.c.user_id2.label("user_id")
+        ])
+        .select_from(friendship_table)
+        .where((friendship_table.c.user_id1 == user_id)
+               & friendship_table.c.accepted_at.isnot(None))
+    )
+    friends2 = (
+        select([
+            friendship_table.c.user_id1.label("user_id"),
+        ])
+        .select_from(friendship_table)
+        .where((friendship_table.c.user_id2 == user_id)
+               & friendship_table.c.accepted_at.isnot(None))
+    )
+    friends = union(friends1, friends2).alias('friends')
+
+    query = (
+        friends.select()
+    )
+
+    friends, error = None, None
+    try:
+        friends = await db.fetch_all(query)
+    except Exception as e:
+        logging.error(e)
+        error = e
+    return {'friends': friends, 'error': error}
+
+
 # functions related to getting friends (used for search, etc.)
-async def get_user_friends(
+async def get_user_friends_with_friendship_state(
     db: Database,
     user_id: str,
     curr_user_id: str,

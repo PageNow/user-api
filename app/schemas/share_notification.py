@@ -3,8 +3,7 @@ import uuid
 from pydantic import BaseModel
 
 
-class ShareNotificationBase(BaseModel):
-    user_id: str
+class ShareNotificationCreate(BaseModel):
     url: str
     title: str
 

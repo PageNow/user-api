@@ -25,3 +25,7 @@ class FriendshipDelete(BaseModel):
 class FriendshipInfo(FriendshipBase):
     requested_at: datetime.datetime
     accepted_at: Optional[datetime.datetime]
+
+
+class FriendId(BaseModel):
+    user_id: str
