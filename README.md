@@ -50,7 +50,15 @@ Core user database that is used by [presence-api](https://github.com/PageNow/pre
 
 * `user_table` stores user information.
 
-* `friendship_table` stores friendship relationships. We use a single table to express the relationship between two users. We distinuish *none friendship*, *pending friendship*, and *accepted friendship* by the *accepted_at* attribute. 
+* `friendship_table` stores friendship relationships. We use a single table to express the relationship between two users. We distinuish *none friendship*, *pending friendship*, and *accepted friendship* by the *accepted_at* attribute.
+
+* `share_notification_table` stores share_notification event. A notification event is composed of url and title.
+
+* `share_notification_seen_table` stores whether a user has read share notifications sent to him/her. *event_id* is a foreign key to *share_notification_table*. *seen_at* is null if the share notification is unread. The timestamp of when the notification is read saved in *seen_at* column.
+
+The SQL diagram is as follows.
+
+![sql diagram](./images/sql_diagram.png)
 
 ### AWS API Gateway
 
@@ -160,7 +168,20 @@ Host private-instance
 
 1. SSH into EC@ instance following the steps above.
 2. Run `docker ps` to obtain the docker container id.
-3. Run `docker exec -it postgres_local psql -h RDS_PROXY_ADDRESS -U USERNAME --dbname=DBNAME`
+3. Run `docker exec -it DOCKER_CONTAINER_ID psql -h RDS_PROXY_ADDRESS -U USERNAME --dbname=DBNAME`
+
+### Solve unsynced local and prod RDS
+
+1. Connect to RDS and drop alembic versioning by running `drop table alembic_version`.
+2. Run the following commands.
+```
+$ docker exec -it DOCKER_CONTAINER_ID alembic stamp head
+$ docker exec -it DOCKER_CONTAINER_ID alembic revision --autogenerate -m "New revision"
+$ docker exec -it DOCKER_CONTAINER_ID alembic upgrade head
+$ docker exec -it DOCKER_CONTAINER_ID alembic stamp head
+```
+
+References: https://stackoverflow.com/questions/32311366/alembic-util-command-error-cant-find-identifier
 
 ## References
 
