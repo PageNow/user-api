@@ -20,9 +20,8 @@ router = APIRouter()
 async def get_share_notifications_received(
     is_read: bool = None,  # if None, get all notifications,
     db: Database = Depends(get_db),
-    # curr_user: Dict[str, str] = Depends(get_current_user)
+    curr_user: Dict[str, str] = Depends(get_current_user)
 ):
-    curr_user = {'user_id': '7f7950f5-beee-4326-950b-7b3311bca55a'}
     if is_read is None:
         res = await crud_share_notification.get_all_sharing_notifications(
             db, curr_user['user_id']
@@ -58,9 +57,8 @@ async def create_share_notification(
 async def read_share_notifications(
     share_notification_read: List[ShareNotificationRead],
     db: Database = Depends(get_db),
-    # curr_user: Dict[str, str] = Depends(get_current_user)
+    curr_user: Dict[str, str] = Depends(get_current_user)
 ):
-    curr_user = {'user_id': '7f7950f5-beee-4326-950b-7b3311bca55a'}
     error = await crud_share_notification.read_sharing_notification(
         db, curr_user['user_id'], share_notification_read
     )
