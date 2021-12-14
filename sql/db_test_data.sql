@@ -23,7 +23,7 @@ VALUES
     ('96317528-e71d-4b38-a438-4953d93c78ba', 'f39fbebb-d4c0-4520-9eb3-2cf5fdb734e2', TIMESTAMP '2021-10-13 21:36:38'), -- user1 <-> user2
     ('96317528-e71d-4b38-a438-4953d93c78ba', 'google_117429865182265482928', NULL), -- user1 -> user3
     ('f39fbebb-d4c0-4520-9eb3-2cf5fdb734e2', 'cc06ed68-5909-4802-bd0c-7cf0b0a1c313', TIMESTAMP '2021-10-12 20:31:28'), -- user2 <-> user4
-    ('cc06ed68-5909-4802-bd0c-7cf0b0a1c313', 'google_117429865182265482928', NULL), -- user4 -> user3
+    ('cc06ed68-5909-4802-bd0c-7cf0b0a1c313', 'google_117429865182265482928', TIMESTAMP '2021-10-12 20:31:28'), -- user4 -> user3
     ('9afb334e-a75a-444c-8250-9730f50fe031', '96317528-e71d-4b38-a438-4953d93c78ba', TIMESTAMP '2021-10-11 19:21:24'), -- user5 <-> user1
     ('8010af9d-5ae5-46b2-b35c-7c995b8ea243', '96317528-e71d-4b38-a438-4953d93c78ba', TIMESTAMP '2021-10-11 05:18:50'), -- user6 <-> user1
     ('c7d9c2e3-e72a-4912-b607-dc85dd513be6', '96317528-e71d-4b38-a438-4953d93c78ba', NULL), -- user7 -> user1
@@ -37,4 +37,5 @@ VALUES
     ('867a93c6-5d8b-4f61-9f36-70dd9c0947db', 'google_214425862782267482928', TIMESTAMP '2021-09-13 09:18:45'), -- user10 <-> user8
     ('7f7950f5-beee-4326-950b-7b3311bca55a', '867a93c6-5d8b-4f61-9f36-70dd9c0947db', TIMESTAMP '2021-10-16 11:11:11'), -- user9 <-> user10
     ('cc06ed68-5909-4802-bd0c-7cf0b0a1c313', '8010af9d-5ae5-46b2-b35c-7c995b8ea243', TIMESTAMP '2021-10-10 23:01:05'),
-    ('f39fbebb-d4c0-4520-9eb3-2cf5fdb734e2', '8010af9d-5ae5-46b2-b35c-7c995b8ea243', TIMESTAMP '2021-10-01 11:11:11'); -- user4 <-> user6
+    ('f39fbebb-d4c0-4520-9eb3-2cf5fdb734e2', '8010af9d-5ae5-46b2-b35c-7c995b8ea243', TIMESTAMP '2021-10-01 11:11:11'), -- user4 <-> user6
+    ('google_117429865182265482928', '867a93c6-5d8b-4f61-9f36-70dd9c0947db', TIMESTAMP '2021-08-08 06:01:10'); -- user3 <-> user10

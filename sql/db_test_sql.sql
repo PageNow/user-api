@@ -199,7 +199,26 @@ WITH friends_received AS (
 )
 SELECT * FROM friends_received_mutual_friends;
 
+-- get sent share notifictions
+WITH user_share_notification AS (
+    SELECT * FROM share_notification_table
+    WHERE user_id = 'google_117429865182265482928'
+    ORDER BY sent_at DESC
+    LIMIT 2
+), share_notification_not_seen AS (
+    SELECT user_share_notification.event_id, COUNT(*) as not_seen_count
+        FROM user_share_notification LEFT OUTER JOIN share_notification_seen_table
+        ON user_share_notification.event_id = share_notification_seen_table.event_id
+        WHERE share_notification_seen_table.seen_at is NULL
+        GROUP BY user_share_notification.event_id
+)
+SELECT user_share_notification.event_id, url, title, sent_at,
+    COALESCE(not_seen_count, 0) FROM
+user_share_notification LEFT JOIN share_notification_not_seen
+    ON share_notification_not_seen.event_id = user_share_notification.event_id;
 
+
+----------------------------------------------
 -- DEPRECATED --
 -- get user search result using email (DEPRECATED - not returning mutual friends)
 WITH friends AS (
