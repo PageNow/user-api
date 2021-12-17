@@ -15,8 +15,9 @@ share_notification_table = Table(
     # user who creates the notification
     Column("user_id", String, ForeignKey("user_table.user_id"),
            index=True),
-    Column("timestamp", DateTime, server_default=func.now(),
+    Column("sent_at", DateTime, server_default=func.now(),
            nullable=False),
     Column("url", String, nullable=False),
-    Column("title", String, nullable=False)
+    Column("title", String, nullable=False),
+    Column("sent_to", String, ForeignKey("user_table.user_id"), nullable=True)
 )

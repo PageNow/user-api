@@ -2,12 +2,14 @@ import datetime
 from typing import List
 
 from sqlalchemy import select
+from sqlalchemy.sql.functions import count, coalesce
 
 from databases import Database
 from app.core.logger import logging
 from app.crud import crud_friendship
 from app.models.share_notification import share_notification_table
 from app.models.share_notification_seen import share_notification_seen_table
+from app.models.user import user_table
 from app.schemas.friendship import FriendId
 from app.schemas.share_notification import ShareNotificationCreate, \
     ShareNotificationRead
@@ -33,16 +35,22 @@ async def get_all_sharing_notifications(
         select([
             share_notification_table.c.event_id,
             share_notification_table.c.user_id,
-            share_notification_table.c.timestamp,
+            share_notification_table.c.sent_at,
             share_notification_table.c.url,
             share_notification_table.c.title,
-            user_sharing_notification_seen.c.seen_at
+            user_sharing_notification_seen.c.seen_at,
+            user_table.c.first_name,
+            user_table.c.last_name,
+            user_table.c.profile_image_extension
         ])
         .select_from(
             share_notification_table.join(
                 user_sharing_notification_seen,
                 (share_notification_table.c.event_id ==
                     user_sharing_notification_seen.c.event_id)
+            ).join(
+                user_table,
+                (user_table.c.user_id == share_notification_table.c.user_id)
             )
         )
     )
@@ -80,16 +88,22 @@ async def get_sharing_notifications(
         select([
             share_notification_table.c.event_id,
             share_notification_table.c.user_id,
-            share_notification_table.c.timestamp,
+            share_notification_table.c.sent_at,
             share_notification_table.c.url,
             share_notification_table.c.title,
-            user_sharing_notification_seen.c.seen_at
+            user_sharing_notification_seen.c.seen_at,
+            user_table.c.first_name,
+            user_table.c.last_name,
+            user_table.c.profile_image_extension
         ])
         .select_from(
             share_notification_table.join(
                 user_sharing_notification_seen,
                 (share_notification_table.c.event_id ==
                     user_sharing_notification_seen.c.event_id)
+            ).join(
+                user_table,
+                (user_table.c.user_id == share_notification_table.c.user_id)
             )
         )
     )
@@ -101,6 +115,74 @@ async def get_sharing_notifications(
         logging.error(e)
         error = e
     return {'notifications': notifications, 'error': error}
+
+
+async def get_sharing_notifications_sent(
+    db: Database,
+    curr_user_id: str,
+    limit: int,
+    offset: int
+):
+    user_share_notification = (
+        select([
+            share_notification_table.c.event_id,
+            share_notification_table.c.user_id,
+            share_notification_table.c.sent_at,
+            share_notification_table.c.url,
+            share_notification_table.c.title
+        ])
+        .select_from(
+            share_notification_table
+        )
+        .where(share_notification_table.c.user_id == curr_user_id)
+        .order_by(share_notification_table.c.sent_at.desc())
+        .limit(limit)
+        .offset(offset)
+        .cte().alias('user_share_notification')
+    )
+    share_notification_not_seen = (
+        select([
+            user_share_notification.c.event_id,
+            count(user_share_notification.c.event_id).label('not_seen_count')
+        ])
+        .select_from(
+            user_share_notification.join(
+                share_notification_seen_table,
+                (user_share_notification.c.event_id
+                    == share_notification_seen_table.c.event_id),
+                isouter=True
+            )
+        )
+        .where(share_notification_seen_table.c.seen_at.is_(None))
+        .group_by(user_share_notification.c.event_id)
+        .cte().alias('share_notification_not_seen')
+    )
+    query = (
+        select([
+            user_share_notification.c.event_id,
+            user_share_notification.c.url,
+            user_share_notification.c.title,
+            user_share_notification.c.sent_at,
+            coalesce(share_notification_not_seen.c.not_seen_count, 0)
+            .label('not_seen_count')
+        ])
+        .select_from(
+            user_share_notification.join(
+                share_notification_not_seen,
+                (share_notification_not_seen.c.event_id
+                    == user_share_notification.c.event_id),
+                isouter=True
+            )
+        )
+    )
+
+    notifications_sent, error = None, None
+    try:
+        notifications_sent = await db.fetch_all(query)
+    except Exception as e:
+        logging.error(e)
+        error = e
+    return {'notifications_sent': notifications_sent, 'error': error}
 
 
 async def create_sharing_notification(
@@ -140,6 +222,42 @@ async def create_sharing_notification(
         share_notification_seen_values: List[ShareNotificationSeenCreate] = [
             {'event_id': event_id, 'user_id': friend_id}
             for friend_id in friend_id_arr
+        ]
+        query = share_notification_seen_table.insert()
+        await db.execute_many(
+            query=query, values=share_notification_seen_values)
+    except Exception as e:
+        error = e
+        logging.error(e)
+        await transaction.rollback()
+    else:
+        await transaction.commit()
+    return {'event_id': event_id, 'error': error}
+
+
+async def create_personal_sharing_notification(
+    db: Database,
+    curr_user_id: str,
+    share_notification: ShareNotificationCreate
+):
+    # create rows for share_notification and share_notification_seen
+    # in transaction
+    event_id, error = None, None
+    transaction = await db.transaction()
+    try:
+        # create a row for new share_notification entry
+        share_data = share_notification.dict()
+        share_notification: ShareNotificationCreate = {
+            'user_id': curr_user_id,
+            'url': share_data['url'],
+            'title': share_data['title'],
+            'sent_to': share_data['sent_to']
+        }
+        query = share_notification_table.insert()
+        event_id = await db.execute(query=query, values=share_notification)
+        # create entries for share_notification_seen of the target user
+        share_notification_seen_values: List[ShareNotificationSeenCreate] = [
+            {'event_id': event_id, 'user_id': share_data['sent_to']}
         ]
         query = share_notification_seen_table.insert()
         await db.execute_many(
