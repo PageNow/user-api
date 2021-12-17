@@ -129,7 +129,8 @@ async def get_sharing_notifications_sent(
             share_notification_table.c.user_id,
             share_notification_table.c.sent_at,
             share_notification_table.c.url,
-            share_notification_table.c.title
+            share_notification_table.c.title,
+            share_notification_table.c.sent_to
         ])
         .select_from(
             share_notification_table
@@ -163,8 +164,12 @@ async def get_sharing_notifications_sent(
             user_share_notification.c.url,
             user_share_notification.c.title,
             user_share_notification.c.sent_at,
+            user_share_notification.c.sent_to,
             coalesce(share_notification_not_seen.c.not_seen_count, 0)
-            .label('not_seen_count')
+            .label('not_seen_count'),
+            user_table.c.first_name,
+            user_table.c.last_name,
+            user_table.c.profile_image_extension
         ])
         .select_from(
             user_share_notification.join(
@@ -172,8 +177,14 @@ async def get_sharing_notifications_sent(
                 (share_notification_not_seen.c.event_id
                     == user_share_notification.c.event_id),
                 isouter=True
+            ).join(
+                user_table,
+                (user_share_notification.c.sent_to
+                    == user_table.c.user_id),
+                isouter=True
             )
         )
+        .order_by(user_share_notification.c.sent_at.desc())
     )
 
     notifications_sent, error = None, None

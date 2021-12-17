@@ -19,3 +19,7 @@ class ShareNotificationsSent(ShareNotificationCreate):
     event_id: uuid.UUID
     sent_at: datetime.datetime
     not_seen_count: int
+    sent_to: Optional[str]
+    first_name: Optional[str]
+    last_name: Optional[str]
+    profile_image_extension: Optional[str]
